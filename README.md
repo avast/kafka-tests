@@ -51,6 +51,14 @@ apt-get install redis-server redis-tools
 ````
 
 
+Compilation
+-----------
+
+````sh
+mvn package
+````
+
+
 Execution
 ---------
 
