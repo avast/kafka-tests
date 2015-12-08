@@ -54,6 +54,8 @@ apt-get install redis-server redis-tools
 Execution
 ---------
 
+### Start
+
 - Make sure all data are consumed from Kafka by all consumers.
     - Offsets should be at the latest positions.
     - Start and stop consumers after a while if you are unsure.
@@ -75,6 +77,9 @@ FLUSHALL
     - Note there may be multiple consumers/threads inside based on `Configuration`.
 - Start one or more instances of `Kafka09Producer`
 
+
+### More instances, rebalancing
+
 - Look at state in logs of `ResultsUpdater`.
 
 - Start and stop producers to have higher/lower load of messages.
@@ -87,20 +92,21 @@ ps aux | egrep 'Consumer|Producer|Updater'
 kill PID
 ````
 
-- Stop of test:
-    - Shutdown all producers first.
+### Stop
+
+- Shutdown all producers first.
 
 ````sh
 kill `pgrep --full 'Kafka09Producer'`
 ````
 
-    - Let all consumers to consume all messages from Kafka.
+- Let all consumers to consume all messages from Kafka.
     
 ````sh
 kill `pgrep --full 'Kafka09.*Consumer'`
 ````
 
-    - Let results updater to process all data in database.
+- Let results updater to process all data in database.
 
 ````sh
 kill `pgrep --full 'ResultsUpdater'`
