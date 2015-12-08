@@ -81,7 +81,6 @@ FLUSHALL
 ### More instances, rebalancing
 
 - Look at state in logs of `ResultsUpdater`.
-
 - Start and stop producers to have higher/lower load of messages.
 - Start and stop consumers to test behavior of consumer during rebalancing.
     - Always at least one consumer instance in each group should be running.
@@ -91,6 +90,7 @@ FLUSHALL
 ps aux | egrep 'Consumer|Producer|Updater'
 kill PID
 ````
+
 
 ### Stop
 
