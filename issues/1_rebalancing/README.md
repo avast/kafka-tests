@@ -6,12 +6,13 @@ Short Description
 
 Adding more and more consumers to a consumer group may result in unsuccessful rebalancing. Data from one or more partitions
 are not consumed and are not effectively available to the client application (e.g. for 15 minutes). Situation can be resolved
-externally by touching consumer group again (add or remove a consumer) which forces another rebalancing that may or may not be successful.
+externally by touching the consumer group again (add or remove a consumer) which forces another rebalancing that may or may not be successful.
 
-Significantly higher CPU utilization was observed in such case (from about 3% to 17%). It is both in affected consumer
-thread and in Kafka broker according to htop and profiling using jvisualvm.
+Significantly higher CPU utilization was observed in such cases (from about 3% to 17%). The CPU utilization takes place in both the affected consumer
+thread and Kafka broker according to htop and profiling using jvisualvm.
 
-The issue is not deterministic but it's possible to reliably repeat it in few minutes just by executing more and more consumers.
+The issue is not deterministic but it can be easily reproduced after a few minutes just by executing more and more consumers.
+More parallelism with multiple CPUs probably gives the issue more chances to appear.
 
 
 Scenario and Initial Analysis
@@ -24,10 +25,12 @@ Scenario and Initial Analysis
     - Just extract the archive, no changes in configuration.
     - `bin/zookeeper-server-start.sh config/zookeeper.properties`
     - `bin/kafka-server-start.sh config/server.properties`
-- Setup environment according to README in the top level directory (topic, Redis, etc.).
+- Setup environment according to README in the top level directory (create topic, install Redis).
     - `ZOOKEEPER=localhost:2181 && bin/kafka-topics.sh --zookeeper $ZOOKEEPER --create --replication-factor 1 --partitions 9 --topic kafka-test`
     - `apt-get install redis-server redis-tools`
 - Execute all subsystems locally.
+
+- Clone 'kafka-tests' project from GitHub and build it. Run the following scripts:
 
 ````sh
 ./erase_all_data.sh
@@ -47,15 +50,16 @@ tail -f logs/ResultsUpdater_*.log
 ### Try to break Kafka or consumer
 
 - Add more and more consumers with about 10 seconds delay until the issue occurs (typically 5 - 10 instances).
-    - The issue was reproduced with both consumer types (Kafka09AutoCommitConsumer, Kafka09SeekingConsumer).
+    - The issue was reproduced with both consumer types (Kafka09AutoCommitConsumer, Kafka09SeekingConsumer) on a multiprocessor system
 
 ````sh
 ./run_Kafka09AutoCommitConsumer.sh &
 ````
 
 - Search the following pattern in logs.
-    - Number of checks on `Not yet:` line goes higher than 1 or 2 and continuously increases during each update.
-    - All columns on `Not yet:` line has value of `messagesPerGroup` (100 in the example) except the one of the affected consumer group.
+    - Number of 'checks' on a `Not yet:` line goes higher than 1 or 2 and continuously increases during each update (when it reaches 15, the counter is abandoned and failure counter is increased)
+    - All columns on a `Not yet:` line represent `messagesPerGroup` values (100 in the example) except the one of the affected consumer group.
+    - See two examples below for output when everything is OK and output when the issue is present.
 
 ````
 # OK
@@ -130,18 +134,18 @@ tail -f logs/ResultsUpdater_*.log
 
 ### Analysis while the issue is present
 
-- CPU utilization goes from about 3% to 17% during the issue.
+- CPU utilization goes significantly higher (in my case from about 3% to 17% during the issue).
 - Stop all producers to reliably verify some of the data were not read by consumers.
 
 ````sh
 ./stop_all_producers.sh
 ````
 
-- All consumers shortly finish reading and wait more data, but some messages are still missing (`Not yet:` lines are still present until timeout).
+- All consumers promptly finish reading and wait for more data, but some messages are still missing (`Not yet:` lines are still present until timeout).
 - See screenshots of htop and jvisualvm, they were taken while the issue was present.
 
 
-### Fix issue by external touch
+### Work around using external touch
 
 - Touch Kafka's consumer group by adding another consumer which forces another rebalancing.
 
@@ -149,7 +153,7 @@ tail -f logs/ResultsUpdater_*.log
 ./run_Kafka09AutoCommitConsumer.sh &
 ````
 
-- The missing data surprisingly appears in Kafka after 15 minutes and are consumed.
+- The missing data surprisingly appears in Kafka and are consumed (it was 15 minutes after stop of producers in my case).
 
 ````
 2015-12-09 09:27:49.206 DEBUG com.avast.kafkatests.ResultsUpdater [ResultsUpdater-timer-0]: ====================== Updating state... ====================== (ResultsUpdater.java:52)
@@ -336,7 +340,6 @@ System, versions
 
 ...if anyone is interested.
 
-- Lenovo W530.
 - 8 CPUs.
 - 16 GB RAM.
 - GNU/Linux, Debian Jessie (current stable with few backports).
@@ -352,3 +355,7 @@ java version "1.8.0_66"
 Java(TM) SE Runtime Environment (build 1.8.0_66-b17)
 Java HotSpot(TM) 64-Bit Server VM (build 25.66-b17, mixed mode)
 ````
+
+The issue has been independently reproduced on 4 CPUs virtual machine with CentOS according to these instructions.
+It wasn't reproduced on a single CPU virtual machine, but it doesn't mean it can't appear there too. My colleague
+tried only few attempts and then added CPUs. More parallelism probably gives the issue more chances to appear.
