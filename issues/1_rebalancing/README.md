@@ -359,3 +359,12 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.66-b17, mixed mode)
 The issue has been independently reproduced on 4 CPUs virtual machine with CentOS according to these instructions.
 It wasn't reproduced on a single CPU virtual machine, but it doesn't mean it can't appear there too. My colleague
 tried only few attempts and then added CPUs. More parallelism probably gives the issue more chances to appear.
+
+
+Conclusion
+----------
+
+Issue accepted and very promptly fixed by Kafka developers.
+
+- [https://issues.apache.org/jira/browse/KAFKA-2978](https://issues.apache.org/jira/browse/KAFKA-2978)
+- [https://github.com/apache/kafka/pull/666](https://github.com/apache/kafka/pull/666)

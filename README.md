@@ -119,3 +119,10 @@ kill `pgrep --full 'Kafka09.*Consumer'`
 ````sh
 kill `pgrep --full 'ResultsUpdater'`
 ````
+
+
+### Issues found using this tool
+
+- [Topic partition is not sometimes consumed after rebalancing of consumer group](https://github.com/avast/kafka-tests/tree/issue1/issues/1_rebalancing)
+    - [https://issues.apache.org/jira/browse/KAFKA-2978](https://issues.apache.org/jira/browse/KAFKA-2978)
+    - [https://github.com/apache/kafka/pull/666](https://github.com/apache/kafka/pull/666)
