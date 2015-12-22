@@ -1,6 +1,8 @@
 package com.avast.kafkatests;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * State of a group in storage.
@@ -9,21 +11,25 @@ public class GroupState {
     private final UUID key;
     private final int send;
     private final int confirm;
-    private final int consumeAutoCommit;
-    private final int consumeSeeking;
+    private final List<ConsumerCount> consumerCounts;
     private final int checks;
 
-    public GroupState(UUID key, int send, int confirm, int consumeAutoCommit, int consumeSeeking, int checks) {
+    public GroupState(UUID key, int send, int confirm, List<ConsumerCount> consumerCounts, int checks) {
         this.key = key;
         this.send = send;
         this.confirm = confirm;
-        this.consumeAutoCommit = consumeAutoCommit;
-        this.consumeSeeking = consumeSeeking;
+        this.consumerCounts = consumerCounts;
         this.checks = checks;
     }
 
     public UUID getKey() {
         return key;
+    }
+
+    public boolean isComplete(int messagesPerGroup) {
+        return send == messagesPerGroup
+                && confirm == messagesPerGroup
+                && consumerCounts.stream().allMatch(c -> c.getCount() == messagesPerGroup);
     }
 
     public int getSend() {
@@ -34,12 +40,8 @@ public class GroupState {
         return confirm;
     }
 
-    public int getConsumeAutoCommit() {
-        return consumeAutoCommit;
-    }
-
-    public int getConsumeSeeking() {
-        return consumeSeeking;
+    public List<ConsumerCount> getConsumerCounts() {
+        return consumerCounts;
     }
 
     public int getChecks() {
@@ -48,7 +50,10 @@ public class GroupState {
 
     @Override
     public String toString() {
-        return key + ", " + send + " send, " + confirm + " confirm, " + consumeAutoCommit + " consume auto commit, "
-                + consumeSeeking + " consume seeking, " + checks + " checks";
+        String consumersStat = consumerCounts.stream()
+                .map(e -> e.getCount() + " consume " + e.getConsumerType())
+                .collect(Collectors.joining(", "));
+
+        return key + ", " + send + " send, " + confirm + " confirm, " + consumersStat + ", " + checks + " checks";
     }
 }

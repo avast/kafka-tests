@@ -1,5 +1,7 @@
 package com.avast.kafkatests;
 
+import java.util.List;
+
 /**
  * Total state.
  */
@@ -7,41 +9,35 @@ public class TotalState {
     private final int send;
     private final int sendConfirm;
     private final int sendFail;
-    private final int consume;
-    private final int consumeSeeking;
+    private final List<ConsumerCount> consume;
     private final int consumeSeekingSkip;
 
     private final int duplicationsSend;
     private final int duplicationsSendConfirm;
-    private final int duplicationsConsumeAutoCommit;
-    private final int duplicationsConsumeSeeking;
+    private final List<ConsumerCount> duplicationsConsume;
 
     private final int bitsSuccess;
     private final int bitsFailureSend;
     private final int bitsFailureConfirm;
-    private final int bitsFailureConsumeAutoCommit;
-    private final int bitsFailureConsumeSeeking;
+    private final List<ConsumerCount> bitsFailureConsume;
 
-    public TotalState(int send, int sendConfirm, int sendFail, int consume, int consumeSeeking, int consumeSeekingSkip,
-                      int duplicationsSend, int duplicationsSendConfirm, int duplicationsConsumeAutoCommit, int duplicationsConsumeSeeking,
-                      int bitsSuccess, int bitsFailureSend, int bitsFailureConfirm, int bitsFailureConsumeAutoCommit, int bitsFailureConsumeSeeking) {
+    public TotalState(int send, int sendConfirm, int sendFail, List<ConsumerCount> consume, int consumeSeekingSkip,
+                      int duplicationsSend, int duplicationsSendConfirm, List<ConsumerCount> duplicationsConsume,
+                      int bitsSuccess, int bitsFailureSend, int bitsFailureConfirm, List<ConsumerCount> bitsFailureConsume) {
         this.send = send;
         this.sendConfirm = sendConfirm;
         this.sendFail = sendFail;
         this.consume = consume;
-        this.consumeSeeking = consumeSeeking;
         this.consumeSeekingSkip = consumeSeekingSkip;
 
         this.duplicationsSend = duplicationsSend;
         this.duplicationsSendConfirm = duplicationsSendConfirm;
-        this.duplicationsConsumeAutoCommit = duplicationsConsumeAutoCommit;
-        this.duplicationsConsumeSeeking = duplicationsConsumeSeeking;
+        this.duplicationsConsume = duplicationsConsume;
 
         this.bitsSuccess = bitsSuccess;
         this.bitsFailureSend = bitsFailureSend;
         this.bitsFailureConfirm = bitsFailureConfirm;
-        this.bitsFailureConsumeAutoCommit = bitsFailureConsumeAutoCommit;
-        this.bitsFailureConsumeSeeking = bitsFailureConsumeSeeking;
+        this.bitsFailureConsume = bitsFailureConsume;
     }
 
     public int getSend() {
@@ -56,12 +52,8 @@ public class TotalState {
         return sendFail;
     }
 
-    public int getConsume() {
+    public List<ConsumerCount> getConsume() {
         return consume;
-    }
-
-    public int getConsumeSeeking() {
-        return consumeSeeking;
     }
 
     public int getConsumeSeekingSkip() {
@@ -76,12 +68,8 @@ public class TotalState {
         return duplicationsSendConfirm;
     }
 
-    public int getDuplicationsConsumeAutoCommit() {
-        return duplicationsConsumeAutoCommit;
-    }
-
-    public int getDuplicationsConsumeSeeking() {
-        return duplicationsConsumeSeeking;
+    public List<ConsumerCount> getDuplicationsConsume() {
+        return duplicationsConsume;
     }
 
     public int getBitsSuccess() {
@@ -96,11 +84,7 @@ public class TotalState {
         return bitsFailureConfirm;
     }
 
-    public int getBitsFailureConsumeAutoCommit() {
-        return bitsFailureConsumeAutoCommit;
-    }
-
-    public int getBitsFailureConsumeSeeking() {
-        return bitsFailureConsumeSeeking;
+    public List<ConsumerCount> getBitsFailureConsume() {
+        return bitsFailureConsume;
     }
 }

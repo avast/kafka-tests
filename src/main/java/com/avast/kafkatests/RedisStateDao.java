@@ -18,32 +18,28 @@ public class RedisStateDao implements StateDao {
 
     private static final String KEY_PREFIX_SEND = "send:";
     private static final String KEY_PREFIX_CONFIRM = "confirm:";
-    private static final String KEY_PREFIX_CONSUME_AUTO_COMMIT = "consume_auto_commit:";
     private static final String KEY_PREFIX_CHECKS = "checks:";
-    private static final String KEY_PREFIX_CONSUME_SEEKING = "consume_seeking:";
+    private static final String KEY_PREFIX_CONSUME = "consume:";
 
     private static final String KEY_MESSAGES_SEND = "messages_send";
     private static final String KEY_MESSAGES_SEND_CONFIRM = "messages_send_confirm";
     private static final String KEY_MESSAGES_SEND_FAIL = "messages_send_fail";
-    private static final String KEY_MESSAGES_CONSUME_AUTO_COMMIT = "messages_consume_auto_commit";
-    private static final String KEY_MESSAGES_CONSUME_SEEKING = "messages_consume_seeking";
+    private static final String KEY_MESSAGES_CONSUME = "messages_consume";
     private static final String KEY_MESSAGES_CONSUME_SEEKING_SKIP = "messages_consume_seeking_skip";
 
     private static final String KEY_DUPLICATIONS_SEND = "duplications_send";
     private static final String KEY_DUPLICATIONS_SEND_CONFIRM = "duplications_send_confirm";
-    private static final String KEY_DUPLICATIONS_CONSUME_AUTO_COMMIT = "duplications_consume_auto_commit";
-    private static final String KEY_DUPLICATIONS_CONSUME_SEEKING = "duplications_consume_seeking";
+    private static final String KEY_DUPLICATIONS_CONSUME = "duplications_consume";
 
     private static final String KEY_BITS_SUCCESS = "bits_success";
     private static final String KEY_BITS_FAILURE_SEND = "bits_failure_send";
     private static final String KEY_BITS_FAILURE_CONFIRM = "bits_failure_confirm";
-    private static final String KEY_BITS_FAILURE_CONSUME_AUTO_COMMIT = "bits_failure_consume_auto_commit";
-    private static final String KEY_BITS_FAILURE_CONSUME_SEEKING = "bits_failure_consume_seeking";
+    private static final String KEY_BITS_FAILURE_CONSUME = "bits_failure_consume";
 
     private final JedisPool redisPool;
 
     public RedisStateDao(String redisServer) {
-        redisPool = new JedisPool(redisServer);
+        this.redisPool = new JedisPool(redisServer);
     }
 
     @Override
@@ -70,8 +66,11 @@ public class RedisStateDao implements StateDao {
     }
 
     @Override
-    public void markConsumeAutoCommit(UUID key, int value) {
-        setBit(KEY_PREFIX_CONSUME_AUTO_COMMIT + key, value, KEY_MESSAGES_CONSUME_AUTO_COMMIT, KEY_DUPLICATIONS_CONSUME_AUTO_COMMIT);
+    public void markConsume(ConsumerType consumerType, UUID key, int value) {
+        setBit(KEY_PREFIX_CONSUME + consumerType + ":" + key,
+                value,
+                KEY_MESSAGES_CONSUME + ":" + consumerType,
+                KEY_DUPLICATIONS_CONSUME + ":" + consumerType);
     }
 
     private void setBit(String key, int position, String counter, String duplicationsCounter) {
@@ -88,11 +87,6 @@ public class RedisStateDao implements StateDao {
     }
 
     @Override
-    public void markConsumeSeeking(UUID key, int value) {
-        setBit(KEY_PREFIX_CONSUME_SEEKING + key, value, KEY_MESSAGES_CONSUME_SEEKING, KEY_DUPLICATIONS_CONSUME_SEEKING);
-    }
-
-    @Override
     public void markConsumeSeekingSkip(UUID key, int value) {
         try (Jedis redis = redisPool.getResource()) {
             redis.incr(KEY_MESSAGES_CONSUME_SEEKING_SKIP);
@@ -100,22 +94,26 @@ public class RedisStateDao implements StateDao {
     }
 
     @Override
-    public List<GroupState> listGroupStates() {
+    public List<GroupState> listGroupStates(List<ConsumerType> consumerTypes) {
         try (Jedis redis = redisPool.getResource()) {
             Set<String> keys = readAllKeysWithPrefix(redis, KEY_PREFIX_SEND);
             keys.addAll(readAllKeysWithPrefix(redis, KEY_PREFIX_CONFIRM));
-            keys.addAll(readAllKeysWithPrefix(redis, KEY_PREFIX_CONSUME_AUTO_COMMIT));
-            keys.addAll(readAllKeysWithPrefix(redis, KEY_PREFIX_CONSUME_SEEKING));
+            consumerTypes.forEach(t -> keys.addAll(readAllKeysWithPrefix(redis, KEY_PREFIX_CONSUME + t + ":")));
 
             return keys.stream()
                     .map(k -> new GroupState(UUID.fromString(k),
                             redis.bitcount(KEY_PREFIX_SEND + k).intValue(),
                             redis.bitcount(KEY_PREFIX_CONFIRM + k).intValue(),
-                            redis.bitcount(KEY_PREFIX_CONSUME_AUTO_COMMIT + k).intValue(),
-                            redis.bitcount(KEY_PREFIX_CONSUME_SEEKING + k).intValue(),
+                            getConsumerCounts(consumerTypes, redis, k),
                             readInt(redis, KEY_PREFIX_CHECKS + k)))
                     .collect(Collectors.toList());
         }
+    }
+
+    private List<ConsumerCount> getConsumerCounts(List<ConsumerType> consumerTypes, Jedis redis, String k) {
+        return consumerTypes.stream()
+                .map(t -> new ConsumerCount(t, redis.bitcount(KEY_PREFIX_CONSUME + t + ":" + k).intValue()))
+                .collect(Collectors.<ConsumerCount>toList());
     }
 
     private Set<String> readAllKeysWithPrefix(Jedis redis, String prefix) {
@@ -136,30 +134,50 @@ public class RedisStateDao implements StateDao {
     }
 
     @Override
-    public void success(UUID key, int messagesPerGroup) {
+    public void success(GroupState group, int messagesPerGroup) {
         try (Jedis redis = redisPool.getResource()) {
             redis.incrBy(KEY_BITS_SUCCESS, messagesPerGroup);
-            cleanup(redis, key);
+            cleanup(redis, group);
         }
     }
 
     @Override
-    public void failure(UUID key, int send, int confirm, int consume, int consumeSeeking) {
+    public void failure(GroupState group, int messagesPerGroup) {
         try (Jedis redis = redisPool.getResource()) {
-            redis.incrBy(KEY_BITS_FAILURE_SEND, send);
-            redis.incrBy(KEY_BITS_FAILURE_CONFIRM, confirm);
-            redis.incrBy(KEY_BITS_FAILURE_CONSUME_AUTO_COMMIT, consume);
-            redis.incrBy(KEY_BITS_FAILURE_CONSUME_SEEKING, consume);
-            cleanup(redis, key);
+            int sendFailures = messagesPerGroup - group.getSend();
+            if (sendFailures > 0) {
+                redis.incrBy(KEY_BITS_FAILURE_SEND, sendFailures);
+            }
+
+            int confirmFailures = messagesPerGroup - group.getConfirm();
+            if (confirmFailures > 0) {
+                redis.incrBy(KEY_BITS_FAILURE_CONFIRM, confirmFailures);
+            }
+
+            group.getConsumerCounts().stream()
+                    .forEach(e -> {
+                        int consumeFailures = messagesPerGroup - e.getCount();
+                        if (consumeFailures > 0) {
+                            redis.incrBy(KEY_BITS_FAILURE_CONSUME + ":" + e.getConsumerType(), consumeFailures);
+                        }
+                    });
+
+            cleanup(redis, group);
         }
     }
 
-    private void cleanup(Jedis redis, UUID key) {
-        redis.del(KEY_PREFIX_SEND + key,
-                KEY_PREFIX_CONFIRM + key,
-                KEY_PREFIX_CONSUME_AUTO_COMMIT + key,
-                KEY_PREFIX_CONSUME_SEEKING + key,
-                KEY_PREFIX_CHECKS + key);
+    private void cleanup(Jedis redis, GroupState group) {
+        UUID key = group.getKey();
+
+        List<String> keys = group.getConsumerCounts().stream()
+                .map(t -> KEY_PREFIX_CONSUME + t.getConsumerType() + ":" + key)
+                .collect(Collectors.toList());
+
+        keys.add(KEY_PREFIX_SEND + key);
+        keys.add(KEY_PREFIX_CONFIRM + key);
+        keys.add(KEY_PREFIX_CHECKS + key);
+
+        redis.del(keys.toArray(new String[keys.size()]));
     }
 
     @Override
@@ -170,26 +188,29 @@ public class RedisStateDao implements StateDao {
     }
 
     @Override
-    public TotalState totalState() {
+    public TotalState totalState(List<ConsumerType> consumerTypes) {
         try (Jedis redis = redisPool.getResource()) {
             return new TotalState(
                     readInt(redis, KEY_MESSAGES_SEND),
                     readInt(redis, KEY_MESSAGES_SEND_CONFIRM),
                     readInt(redis, KEY_MESSAGES_SEND_FAIL),
-                    readInt(redis, KEY_MESSAGES_CONSUME_AUTO_COMMIT),
-                    readInt(redis, KEY_MESSAGES_CONSUME_SEEKING),
+                    consumerTypes.stream()
+                            .map(t -> new ConsumerCount(t, readInt(redis, KEY_MESSAGES_CONSUME + ":" + t)))
+                            .collect(Collectors.toList()),
                     readInt(redis, KEY_MESSAGES_CONSUME_SEEKING_SKIP),
 
                     readInt(redis, KEY_DUPLICATIONS_SEND),
                     readInt(redis, KEY_DUPLICATIONS_SEND_CONFIRM),
-                    readInt(redis, KEY_DUPLICATIONS_CONSUME_AUTO_COMMIT),
-                    readInt(redis, KEY_DUPLICATIONS_CONSUME_SEEKING),
+                    consumerTypes.stream()
+                            .map(t -> new ConsumerCount(t, readInt(redis, KEY_DUPLICATIONS_CONSUME + ":" + t)))
+                            .collect(Collectors.toList()),
 
                     readInt(redis, KEY_BITS_SUCCESS),
                     readInt(redis, KEY_BITS_FAILURE_SEND),
                     readInt(redis, KEY_BITS_FAILURE_CONFIRM),
-                    readInt(redis, KEY_BITS_FAILURE_CONSUME_AUTO_COMMIT),
-                    readInt(redis, KEY_BITS_FAILURE_CONSUME_SEEKING)
+                    consumerTypes.stream()
+                            .map(t -> new ConsumerCount(t, readInt(redis, KEY_BITS_FAILURE_CONSUME + ":" + t)))
+                            .collect(Collectors.toList())
             );
         }
     }

@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -22,12 +23,15 @@ public class ResultsUpdater implements AutoCloseable, Runnable {
     private final StateDao stateDao;
     private final int messagesPerGroup;
     private final int checkBeforeFailure;
+    private final List<ConsumerType> consumerTypes;
 
-    public ResultsUpdater(Duration shutdownTimeout, Duration updatePeriod, StateDao stateDao, int messagesPerGroup, int checkBeforeFailure) {
+    public ResultsUpdater(Duration shutdownTimeout, Duration updatePeriod, StateDao stateDao, int messagesPerGroup, int checkBeforeFailure,
+                          List<ConsumerType> consumerTypes) {
         this.stateDao = stateDao;
         this.shutdownTimeout = shutdownTimeout;
         this.messagesPerGroup = messagesPerGroup;
         this.checkBeforeFailure = checkBeforeFailure;
+        this.consumerTypes = consumerTypes;
 
         this.executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
                 .setNameFormat(getClass().getSimpleName() + "-timer-%d")
@@ -58,19 +62,17 @@ public class ResultsUpdater implements AutoCloseable, Runnable {
     }
 
     private void updateState() {
-        stateDao.listGroupStates().stream().forEach(this::processGroup);
+        stateDao.listGroupStates(consumerTypes).stream().forEach(this::processGroup);
     }
 
     private void processGroup(GroupState group) {
-        if (group.getSend() == messagesPerGroup && group.getConfirm() == messagesPerGroup
-                && group.getConsumeAutoCommit() == messagesPerGroup && group.getConsumeSeeking() == messagesPerGroup) {
+        if (group.isComplete(messagesPerGroup)) {
             LOGGER.trace("Group successfully processed: {}", group);
-            stateDao.success(group.getKey(), messagesPerGroup);
+            stateDao.success(group, messagesPerGroup);
         } else {
             if (group.getChecks() > checkBeforeFailure) {
                 LOGGER.error("Group processing failed: {}", group);
-                stateDao.failure(group.getKey(), messagesPerGroup - group.getSend(), messagesPerGroup - group.getConfirm(),
-                        messagesPerGroup - group.getConsumeAutoCommit(), messagesPerGroup - group.getConsumeSeeking());
+                stateDao.failure(group, messagesPerGroup);
             } else {
                 LOGGER.debug("Not yet: {}", group);
                 stateDao.markChecks(group.getKey());
@@ -79,7 +81,7 @@ public class ResultsUpdater implements AutoCloseable, Runnable {
     }
 
     private void printState() {
-        TotalState state = stateDao.totalState();
+        TotalState state = stateDao.totalState(consumerTypes);
 
         LOGGER.info("State: {} \t\t send requests", state.getSend());
         LOGGER.info("State: {} \t\t send duplications", state.getDuplicationsSend());
@@ -90,21 +92,22 @@ public class ResultsUpdater implements AutoCloseable, Runnable {
         LOGGER.info("State: {} \t\t send confirm duplications", state.getDuplicationsSendConfirm());
         LOGGER.info("State: {} \t\t send confirm bits fail", state.getBitsFailureConfirm());
 
-        LOGGER.info("State: {} \t\t consume auto commit", state.getConsume());
-        LOGGER.info("State: {} \t\t consume auto commit duplications", state.getDuplicationsConsumeAutoCommit());
-        LOGGER.info("State: {} \t\t consume auto commit bits fail", state.getBitsFailureConsumeAutoCommit());
+        state.getConsume()
+                .forEach(c -> LOGGER.info("State: {} \t\t consume {}", c.getCount(), c.getConsumerType()));
+        state.getDuplicationsConsume()
+                .forEach(c -> LOGGER.info("State: {} \t\t consume {} duplications", c.getCount(), c.getConsumerType()));
+        state.getBitsFailureConsume()
+                .forEach(c -> LOGGER.info("State: {} \t\t consume {} bits fail", c.getCount(), c.getConsumerType()));
 
-        LOGGER.info("State: {} \t\t consume seeking", state.getConsumeSeeking());
         LOGGER.info("State: {} \t\t consume seeking skip (consumed multiple times due to simulated error)", state.getConsumeSeekingSkip());
-        LOGGER.info("State: {} \t\t consume seeking duplications", state.getDuplicationsConsumeSeeking());
-        LOGGER.info("State: {} \t\t consume seeking bits fail", state.getBitsFailureConsumeSeeking());
 
         LOGGER.info("State: {} \t\t success bits", state.getBitsSuccess());
 
         LOGGER.info("State: {} \t\t total not confirmed", state.getSend() - state.getSendConfirm());
-        LOGGER.info("State: {} \t\t total not consumed auto commit", state.getSend() - state.getConsume());
         LOGGER.info("State: {} \t\t total not success", state.getSend() - state.getBitsSuccess());
-        LOGGER.info("State: {} \t\t total not consumed seeking", state.getSend() - state.getConsumeSeeking());
+
+        state.getConsume()
+                .forEach(c -> LOGGER.info("State: {} \t\t not consumed {}", state.getSend() - c.getCount(), c.getConsumerType()));
     }
 
     public static void main(String[] args) {
@@ -115,7 +118,9 @@ public class ResultsUpdater implements AutoCloseable, Runnable {
                 Configuration.updateStatePeriod(),
                 new RedisStateDao(Configuration.redisServer()),
                 Configuration.messagesPerGroup(),
-                Configuration.checksBeforeFailure());
+                Configuration.checksBeforeFailure(),
+                Configuration.consumerTypes()
+        );
 
         Utils.closeOnShutdown(instance);
         Utils.loopWithNoExit();

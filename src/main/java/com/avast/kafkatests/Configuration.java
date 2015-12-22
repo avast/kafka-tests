@@ -4,6 +4,8 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 public class Configuration {
@@ -80,5 +82,9 @@ public class Configuration {
 
     public static int percentFailureProbability() {
         return 40;
+    }
+
+    public static List<ConsumerType> consumerTypes() {
+        return Arrays.asList(ConsumerType.values());
     }
 }

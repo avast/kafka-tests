@@ -51,7 +51,7 @@ public class SeekingConsumerLogic implements ConsumerRebalanceListener {
         switch (state) {
             case SUCCESS:
                 LOGGER.trace("Message consumed: {}, {}, {}/{}/{}", record.key(), record.value(), record.topic(), record.partition(), record.offset());
-                stateDao.markConsumeSeeking(UUID.fromString(record.key()), record.value());
+                stateDao.markConsume(ConsumerType.seeking, UUID.fromString(record.key()), record.value());
                 break;
 
             case ERROR:

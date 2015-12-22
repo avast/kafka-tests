@@ -74,7 +74,7 @@ public class Kafka09AutoCommitConsumer implements AutoCloseable, Runnable {
 
                 for (ConsumerRecord<String, Integer> record : records) {
                     LOGGER.trace("Message consumed: {}, {}, {}/{}/{}", record.key(), record.value(), record.topic(), record.partition(), record.offset());
-                    stateDao.markConsumeAutoCommit(UUID.fromString(record.key()), record.value());
+                    stateDao.markConsume(ConsumerType.autocommit, UUID.fromString(record.key()), record.value());
                 }
             }
         } catch (Exception e) {

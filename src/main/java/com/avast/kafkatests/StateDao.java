@@ -13,21 +13,19 @@ public interface StateDao extends AutoCloseable {
 
     void markSendFail(UUID key, int value);
 
-    void markConsumeAutoCommit(UUID key, int value);
+    void markConsume(ConsumerType consumerType, UUID key, int value);
 
     void close();
 
-    List<GroupState> listGroupStates();
+    List<GroupState> listGroupStates(List<ConsumerType> consumerTypes);
 
-    void success(UUID key, int messagesPerGroup);
+    void success(GroupState group, int messagesPerGroup);
 
-    void failure(UUID key, int send, int confirm, int consume, int consumeSeeking);
+    void failure(GroupState group, int messagesPerGroup);
 
     void markChecks(UUID key);
 
-    TotalState totalState();
-
-    void markConsumeSeeking(UUID key, int value);
+    TotalState totalState(List<ConsumerType> consumerTypes);
 
     void markConsumeSeekingSkip(UUID key, int value);
 }
