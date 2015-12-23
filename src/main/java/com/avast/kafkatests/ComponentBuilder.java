@@ -1,6 +1,4 @@
-package com.avast.kafkatests.runner;
-
-import com.avast.kafkatests.RunnableComponent;
+package com.avast.kafkatests;
 
 /**
  * Builder of consumer instances.

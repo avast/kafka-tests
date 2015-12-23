@@ -1,6 +1,5 @@
 package com.avast.kafkatests;
 
-import com.avast.kafkatests.runner.SeekingConsumerBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;

@@ -1,9 +1,4 @@
-package com.avast.kafkatests.runner;
-
-import com.avast.kafkatests.Configuration;
-import com.avast.kafkatests.Kafka09AutoCommitConsumer;
-import com.avast.kafkatests.RedisStateDao;
-import com.avast.kafkatests.RunnableComponent;
+package com.avast.kafkatests;
 
 public class AutoCommitConsumerBuilder implements ComponentBuilder {
     @Override

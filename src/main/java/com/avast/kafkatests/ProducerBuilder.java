@@ -1,9 +1,4 @@
-package com.avast.kafkatests.runner;
-
-import com.avast.kafkatests.Configuration;
-import com.avast.kafkatests.Kafka09Producer;
-import com.avast.kafkatests.RedisStateDao;
-import com.avast.kafkatests.RunnableComponent;
+package com.avast.kafkatests;
 
 public class ProducerBuilder implements ComponentBuilder {
     @Override

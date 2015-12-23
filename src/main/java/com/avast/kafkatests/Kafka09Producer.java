@@ -1,6 +1,5 @@
 package com.avast.kafkatests;
 
-import com.avast.kafkatests.runner.ProducerBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;

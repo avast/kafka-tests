@@ -1,6 +1,5 @@
 package com.avast.kafkatests;
 
-import com.avast.kafkatests.runner.AutoCommitConsumerBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
