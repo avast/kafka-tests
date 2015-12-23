@@ -1,5 +1,6 @@
 package com.avast.kafkatests;
 
+import com.avast.kafkatests.runner.SeekingConsumerBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -20,7 +21,7 @@ import java.util.stream.IntStream;
 /**
  * Consumer of test messages from Kafka with seeking and rewinding to the last committed position on error.
  */
-public class Kafka09SeekingConsumer implements AutoCloseable, Runnable {
+public class Kafka09SeekingConsumer implements RunnableComponent {
     private static final Logger LOGGER = LoggerFactory.getLogger(Kafka09SeekingConsumer.class);
 
     private final ExecutorService executor;
@@ -90,18 +91,7 @@ public class Kafka09SeekingConsumer implements AutoCloseable, Runnable {
 
     public static void main(String[] args) {
         Utils.logAllUnhandledExceptions();
-
-        Kafka09SeekingConsumer instance = new Kafka09SeekingConsumer(
-                Configuration.consumerConfiguration("KafkaTestsSeeking", false),
-                Configuration.kafkaTopic(),
-                Configuration.consumerInstancesSeeking(),
-                Configuration.consumerPollTimeout(),
-                Configuration.shutdownTimeout(),
-                new RedisStateDao(Configuration.redisServer()),
-                Configuration.messagesToChangeState(),
-                Configuration.percentFailureProbability());
-
-        Utils.closeOnShutdown(instance);
+        Utils.closeOnShutdown(new SeekingConsumerBuilder().newInstance());
         Utils.loopWithNoExit();
     }
 }

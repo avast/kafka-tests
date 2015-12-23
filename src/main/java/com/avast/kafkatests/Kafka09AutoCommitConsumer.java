@@ -1,5 +1,6 @@
 package com.avast.kafkatests;
 
+import com.avast.kafkatests.runner.AutoCommitConsumerBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
@@ -21,7 +22,7 @@ import java.util.stream.IntStream;
 /**
  * Consumer of test messages from Kafka with auto commit.
  */
-public class Kafka09AutoCommitConsumer implements AutoCloseable, Runnable {
+public class Kafka09AutoCommitConsumer implements RunnableComponent {
     private static final Logger LOGGER = LoggerFactory.getLogger(Kafka09AutoCommitConsumer.class);
 
     private final ExecutorService executor;
@@ -98,16 +99,7 @@ public class Kafka09AutoCommitConsumer implements AutoCloseable, Runnable {
 
     public static void main(String[] args) {
         Utils.logAllUnhandledExceptions();
-
-        Kafka09AutoCommitConsumer instance = new Kafka09AutoCommitConsumer(
-                Configuration.consumerConfiguration("KafkaTestsAutoCommit", true),
-                Configuration.kafkaTopic(),
-                Configuration.consumerInstancesAutoCommit(),
-                Configuration.consumerPollTimeout(),
-                Configuration.shutdownTimeout(),
-                new RedisStateDao(Configuration.redisServer()));
-
-        Utils.closeOnShutdown(instance);
+        Utils.closeOnShutdown(new AutoCommitConsumerBuilder().newInstance());
         Utils.loopWithNoExit();
     }
 }

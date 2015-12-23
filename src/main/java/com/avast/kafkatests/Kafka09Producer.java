@@ -1,5 +1,6 @@
 package com.avast.kafkatests;
 
+import com.avast.kafkatests.runner.ProducerBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
@@ -21,7 +22,7 @@ import java.util.stream.IntStream;
 /**
  * Producer of test messages to Kafka.
  */
-public class Kafka09Producer implements AutoCloseable, Runnable {
+public class Kafka09Producer implements RunnableComponent {
     private static final Logger LOGGER = LoggerFactory.getLogger(Kafka09Producer.class);
 
     private final ExecutorService executor;
@@ -111,17 +112,7 @@ public class Kafka09Producer implements AutoCloseable, Runnable {
 
     public static void main(String[] args) {
         Utils.logAllUnhandledExceptions();
-
-        Kafka09Producer instance = new Kafka09Producer(
-                Configuration.producerConfiguration(),
-                Configuration.kafkaTopic(),
-                Configuration.producerInstances(),
-                Configuration.messagesPerGroup(),
-                Configuration.producerSlowDown(),
-                Configuration.shutdownTimeout(),
-                new RedisStateDao(Configuration.redisServer()));
-
-        Utils.closeOnShutdown(instance);
+        Utils.closeOnShutdown(new ProducerBuilder().newInstance());
         Utils.loopWithNoExit();
     }
 }
