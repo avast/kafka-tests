@@ -7,19 +7,29 @@ Group of tools to verify Kafka 0.9 is reliable enough and ready for production.
 High-Level Description
 ----------------------
 
-- **Producers** generate groups of N messages and send them to Kafka.
+Basic idea is to verify that every produced message is also consumed by all consumers in a reasonable amount of time.
+
+- `GeneratingProducer`
+    - Generate groups per N messages and send them to Kafka.
     - Message key is string with ID of messages group.
     - Message value is integer with order in the current group of messages.
     - Sending of each message is marked in database.
-    - Confirmation of each send is marked in database.
-- **Consumers** read messages from Kafka.
-    - Each consumed message is marked in database.
-    - There may be multiple consumer types (different Kafka's group ID).
-- **Results updater** is executed periodically.
-    - Verification that all produced messages are consumed by all consumers on level of message groups.
-    - Removal of data required for confirmations.
-    - Increase of various counters.
-    - Print current state of counters.
+    - Confirmation of each send from Kafka broker is marked in database.
+- `AutoCommitConsumer`
+    - Consume messages from Kafka and mark them in database.
+    - Let consumer client to commit offsets automatically.
+- `SeekingConsumer`
+    - Consume messages from Kafka and mark them in database.
+    - Commit offsets manually after predefined number of messages, handle rebalancing notifications.
+    - Skip marking of messages occasionally to simulate e.g. HDFS or Cassandra error and seek back in the queue to the last committed offset.
+- `ResultsUpdater`
+    - Periodically recompute current state and garbage collect processed stuff in database.
+    - Verify that all produced messages were really consumed by all consumers on level of message groups.
+    - Increase of counters and print their values.
+    - There must be always exactly one instance running.
+- `ChaoticManager`
+    - Periodically and randomly change previous decisions, start and stop producers and consumers.
+    - There are bounds for min. and max. number of running components, frequency of updates and number of decisions per update.
 
 
 Preconditions and Requirements
@@ -62,11 +72,13 @@ mvn package
 Execution
 ---------
 
+Prefer to use shell scripts present in the top level project directory or go deeper to understand how the tools exactly work.
+
 ### Start
 
 - Make sure all data are consumed from Kafka by all consumers.
-    - Offsets should be at the latest positions.
-    - Start and stop consumers after a while if you are unsure.
+    - Committed offsets should be at the latest positions.
+    - Start consumers and stop them after a while if you are unsure.
 - Reset state stored in database.
 
 ````sh
@@ -92,33 +104,14 @@ FLUSHALL
 - Start and stop producers to have higher/lower load of messages.
 - Start and stop consumers to test behavior of consumer during rebalancing.
     - Always at least one consumer instance in each group should be running.
-
-````sh
-# There is a graceful shutdown on SIGTERM
-ps aux | egrep 'Consumer|Producer|Updater'
-kill PID
-````
+- Or use `ChaoticManager` to start and stop them periodically.
 
 
 ### Stop
 
 - Shutdown all producers first.
-
-````sh
-kill `pgrep --full 'GeneratorProducer'`
-````
-
 - Let all consumers to consume all messages from Kafka.
-    
-````sh
-kill `pgrep --full 'Consumer'`
-````
-
-- Let results updater to process all data in database.
-
-````sh
-kill `pgrep --full 'ResultsUpdater'`
-````
+- Let `ResultsUpdater` to process all data in database.
 
 
 ### Issues found using this tool
