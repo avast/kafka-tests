@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ps aux | egrep 'Consumer|GeneratorProducer|ResultsUpdater' | grep -v grep
+ps aux | egrep 'Consumer|GeneratorProducer|ResultsUpdater|ChaoticManager' | grep -v grep

@@ -49,10 +49,6 @@ public class Utils {
             executor.shutdown();
             executor.awaitTermination(timeout.toMillis(), TimeUnit.MILLISECONDS);
             LOGGER.debug("Waiting for termination of executor finished: {}, max {} ms, {}", name, timeout.toMillis(), executor);
-
-            if (executor.isTerminated()) {
-                LOGGER.warn("Not all tasks finished in time: {}, max {} ms, {}", name, timeout.toMillis(), executor);
-            }
         } catch (InterruptedException e) {
             LOGGER.error("Waiting for termination of executor interrupted: {}, max {} ms, {}, {}", name, timeout.toMillis(), executor, e, e);
         }
