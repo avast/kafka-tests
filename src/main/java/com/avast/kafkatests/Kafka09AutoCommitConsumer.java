@@ -5,8 +5,6 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -21,9 +19,7 @@ import java.util.stream.IntStream;
 /**
  * Consumer of test messages from Kafka with auto commit.
  */
-public class Kafka09AutoCommitConsumer implements RunnableComponent {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Kafka09AutoCommitConsumer.class);
-
+public class Kafka09AutoCommitConsumer extends AbstractComponent implements ConsumerRebalanceListener {
     private final ExecutorService executor;
     private final AtomicBoolean finish = new AtomicBoolean(false);
     private final Properties configuration;
@@ -33,6 +29,8 @@ public class Kafka09AutoCommitConsumer implements RunnableComponent {
     private final StateDao stateDao;
 
     public Kafka09AutoCommitConsumer(Properties configuration, String topic, int instances, Duration pollTimeout, Duration shutdownTimeout, StateDao stateDao) {
+        logger.info("Starting instance");
+
         this.configuration = configuration;
         this.topic = topic;
         this.pollTimeout = pollTimeout;
@@ -45,7 +43,7 @@ public class Kafka09AutoCommitConsumer implements RunnableComponent {
 
         this.executor = Executors.newFixedThreadPool(instances,
                 new ThreadFactoryBuilder()
-                        .setNameFormat(getClass().getSimpleName() + "-worker-%d")
+                        .setNameFormat(getClass().getSimpleName() + "-" + instanceName + "-worker-" + "%d")
                         .setDaemon(false)
                         .build());
 
@@ -55,45 +53,43 @@ public class Kafka09AutoCommitConsumer implements RunnableComponent {
 
     @Override
     public void close() {
-        LOGGER.info("Closing instance");
+        logger.info("Closing instance");
         finish.set(true);
 
-        Utils.shutdownAndWaitTermination(executor, shutdownTimeout, getClass().getSimpleName());
+        Utils.shutdownAndWaitTermination(executor, shutdownTimeout, getClass().getSimpleName() + "-" + instanceName);
         stateDao.close();
     }
 
     @Override
     public void run() {
-        LOGGER.info("Worker thread started");
+        logger.info("Worker thread started");
 
         try (Consumer<String, Integer> consumer = new KafkaConsumer<>(configuration, new StringDeserializer(), new IntegerDeserializer())) {
-            consumer.subscribe(Collections.singletonList(topic), new RebalanceCallback());
+            consumer.subscribe(Collections.singletonList(topic), this);
 
             while (!finish.get()) {
                 ConsumerRecords<String, Integer> records = consumer.poll(pollTimeout.toMillis());
 
                 for (ConsumerRecord<String, Integer> record : records) {
-                    LOGGER.trace("Message consumed: {}, {}, {}/{}/{}", record.key(), record.value(), record.topic(), record.partition(), record.offset());
+                    logger.trace("Message consumed: {}, {}, {}/{}/{}", record.key(), record.value(), record.topic(), record.partition(), record.offset());
                     stateDao.markConsume(ConsumerType.autocommit, UUID.fromString(record.key()), record.value());
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Unexpected exception occurred: {}", e, e);
+            logger.error("Unexpected exception occurred: {}", e, e);
         }
 
-        LOGGER.info("Worker thread stopped");
+        logger.info("Worker thread stopped");
     }
 
-    private static class RebalanceCallback implements ConsumerRebalanceListener {
-        @Override
-        public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-            LOGGER.info("Rebalance callback, revoked: {}", partitions);
-        }
+    @Override
+    public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+        logger.info("Rebalance callback, revoked: {}", partitions);
+    }
 
-        @Override
-        public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-            LOGGER.info("Rebalance callback, assigned: {}", partitions);
-        }
+    @Override
+    public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+        logger.info("Rebalance callback, assigned: {}", partitions);
     }
 
     public static void main(String[] args) {

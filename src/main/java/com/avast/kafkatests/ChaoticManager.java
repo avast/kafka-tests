@@ -6,12 +6,14 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -47,7 +49,7 @@ public class ChaoticManager implements RunnableComponent {
                 .setDaemon(false)
                 .build());
 
-        executor.scheduleWithFixedDelay(this, 0, updatePeriod.toMillis(), TimeUnit.MILLISECONDS);
+        executor.scheduleWithFixedDelay(this, updatePeriod.toMillis(), updatePeriod.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -73,18 +75,14 @@ public class ChaoticManager implements RunnableComponent {
     }
 
     private void randomDecision() {
-        int type = random.nextInt() % 3;
+        int type = random.nextInt(2);
 
         switch (type) {
             case 0:
-                // Don't know, no decision and no change.
-                break;
-
-            case 1:
                 stopRandomComponent();
                 break;
 
-            case 2:
+            case 1:
                 startNewComponent();
                 break;
 
@@ -113,5 +111,59 @@ public class ChaoticManager implements RunnableComponent {
 
         LOGGER.info("Starting a new component: {}", activeComponents.size());
         activeComponents.add(componentBuilder.newInstance());
+    }
+
+    private static void usage() {
+        String components = Arrays.stream(ComponentType.values())
+                .map(Enum::toString)
+                .collect(Collectors.joining(", "));
+
+        LOGGER.info("Usage: {} componentType minComponents maxComponents decisionsPerUpdate updatePeriodMs", ChaoticManager.class.getSimpleName());
+        LOGGER.info("Usage: Supported component types: {}", components);
+    }
+
+    public static void main(String[] args) {
+        if (args.length < 5) {
+            usage();
+            LOGGER.error("Not enough arguments");
+            System.exit(1);
+        }
+
+        try {
+            ComponentType componentType = ComponentType.valueOf(args[0]);
+            int minComponents = Integer.parseInt(args[1]);
+            int maxComponents = Integer.parseInt(args[2]);
+            int decisionsPerUpdate = Integer.parseInt(args[3]);
+            Duration updatePeriod = Duration.ofMillis(Long.parseLong(args[4]));
+
+            Utils.logAllUnhandledExceptions();
+            Utils.closeOnShutdown(new ChaoticManager(componentType.getComponentBuilder(),
+                    minComponents, maxComponents, decisionsPerUpdate, updatePeriod, Configuration.shutdownTimeout()));
+            Utils.loopWithNoExit();
+        } catch (NumberFormatException e) {
+            usage();
+            LOGGER.error("Parsing of argument failed: {}", e.toString());
+            System.exit(1);
+        } catch (IllegalArgumentException e) {
+            usage();
+            LOGGER.error("Unsupported component type: {}", args[0]);
+            System.exit(1);
+        }
+    }
+
+    private enum ComponentType {
+        producer(new ProducerBuilder()),
+        consumer_autocommit(new AutoCommitConsumerBuilder()),
+        consumer_seeking(new SeekingConsumerBuilder());
+
+        private final ComponentBuilder componentBuilder;
+
+        ComponentType(ComponentBuilder componentBuilder) {
+            this.componentBuilder = componentBuilder;
+        }
+
+        public ComponentBuilder getComponentBuilder() {
+            return componentBuilder;
+        }
     }
 }

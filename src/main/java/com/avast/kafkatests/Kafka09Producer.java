@@ -6,8 +6,6 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Properties;
@@ -21,9 +19,7 @@ import java.util.stream.IntStream;
 /**
  * Producer of test messages to Kafka.
  */
-public class Kafka09Producer implements RunnableComponent {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Kafka09Producer.class);
-
+public class Kafka09Producer extends AbstractComponent {
     private final ExecutorService executor;
     private final AtomicBoolean finish = new AtomicBoolean(false);
     private final String topic;
@@ -36,6 +32,8 @@ public class Kafka09Producer implements RunnableComponent {
     public Kafka09Producer(Properties configuration, String topic, int instances, int messagesPerGroup,
                            Duration producerSlowDown, Duration shutdownTimeout,
                            StateDao stateDao) {
+        logger.info("Starting instance");
+
         this.topic = topic;
         this.messagesPerGroup = messagesPerGroup;
         this.producerSlowDown = producerSlowDown;
@@ -46,7 +44,7 @@ public class Kafka09Producer implements RunnableComponent {
 
         this.executor = Executors.newFixedThreadPool(instances,
                 new ThreadFactoryBuilder()
-                        .setNameFormat(getClass().getSimpleName() + "-worker-%d")
+                        .setNameFormat(getClass().getSimpleName() + "-" + instanceName + "-worker-" + "%d")
                         .setDaemon(false)
                         .build());
 
@@ -56,46 +54,46 @@ public class Kafka09Producer implements RunnableComponent {
 
     @Override
     public void close() {
-        LOGGER.info("Closing instance");
+        logger.info("Closing instance");
         finish.set(true);
 
-        Utils.shutdownAndWaitTermination(executor, shutdownTimeout, getClass().getSimpleName());
+        Utils.shutdownAndWaitTermination(executor, shutdownTimeout, getClass().getSimpleName() + "-" + instanceName);
         producer.close(shutdownTimeout.toMillis(), TimeUnit.MILLISECONDS);
         stateDao.close();
     }
 
     @Override
     public void run() {
-        LOGGER.info("Worker thread started");
+        logger.info("Worker thread started");
 
         try {
             while (!finish.get()) {
                 produceMessagesGroup();
             }
         } catch (Exception e) {
-            LOGGER.error("Unexpected exception occurred: {}", e, e);
+            logger.error("Unexpected exception occurred: {}", e, e);
         }
 
-        LOGGER.info("Worker thread stopped");
+        logger.info("Worker thread stopped");
     }
 
     private void produceMessagesGroup() {
         UUID key = UUID.randomUUID();
-        LOGGER.debug("Starting message group: {} topic, {}", topic, key);
+        logger.debug("Starting message group: {} topic, {}", topic, key);
         IntStream.range(0, messagesPerGroup).forEach((value) -> produceSingleMessage(key, value));
     }
 
     private void produceSingleMessage(UUID key, int value) {
-        LOGGER.trace("Producing message: {} topic, {}, {}", topic, key, value);
+        logger.trace("Producing message: {} topic, {}, {}", topic, key, value);
 
         stateDao.markSend(key, value);
         producer.send(new ProducerRecord<>(topic, key.toString(), value),
                 (metadata, exception) -> {
                     if (exception != null) {
-                        LOGGER.error("Producing message failed: {}", exception, exception);
+                        logger.error("Producing message failed: {}", exception, exception);
                         stateDao.markSendFail(key, value);
                     } else {
-                        LOGGER.trace("Producing message successful: {} topic, {}, {}", topic, key, value);
+                        logger.trace("Producing message successful: {} topic, {}, {}", topic, key, value);
                         stateDao.markSendConfirm(key, value);
                     }
                 });
@@ -104,7 +102,7 @@ public class Kafka09Producer implements RunnableComponent {
             try {
                 Thread.sleep(producerSlowDown.toMillis());
             } catch (InterruptedException e) {
-                LOGGER.error("Interrupted exception in producer");
+                logger.error("Interrupted exception in producer");
             }
         }
     }
