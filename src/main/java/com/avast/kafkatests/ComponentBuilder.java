@@ -1,7 +1,7 @@
 package com.avast.kafkatests;
 
 /**
- * Builder of consumer instances.
+ * Builder of worker components.
  */
 public interface ComponentBuilder {
     RunnableComponent newInstance();

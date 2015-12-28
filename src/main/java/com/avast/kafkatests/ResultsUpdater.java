@@ -12,9 +12,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Computation of results.
+ * Computation of results, only a single instance per whole cluster must be executed.
  */
-public class ResultsUpdater implements AutoCloseable, Runnable {
+public class ResultsUpdater implements RunnableComponent {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResultsUpdater.class);
 
     private final ScheduledExecutorService executor;
@@ -42,7 +42,7 @@ public class ResultsUpdater implements AutoCloseable, Runnable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         LOGGER.info("Closing instance");
         finish.set(true);
 
@@ -112,17 +112,7 @@ public class ResultsUpdater implements AutoCloseable, Runnable {
 
     public static void main(String[] args) {
         Utils.logAllUnhandledExceptions();
-
-        ResultsUpdater instance = new ResultsUpdater(
-                Configuration.shutdownTimeout(),
-                Configuration.updateStatePeriod(),
-                new RedisStateDao(Configuration.redisServer()),
-                Configuration.messagesPerGroup(),
-                Configuration.checksBeforeFailure(),
-                Configuration.consumerTypes()
-        );
-
-        Utils.closeOnShutdown(instance);
+        Utils.closeOnShutdown(new ResultsUpdaterBuilder().newInstance());
         Utils.loopWithNoExit();
     }
 }
