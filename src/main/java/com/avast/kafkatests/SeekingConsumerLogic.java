@@ -39,7 +39,7 @@ public class SeekingConsumerLogic implements ConsumerRebalanceListener {
 
         messages += records.count();
 
-        if (messages > messagesToChangeState) {
+        if (messages > messagesToChangeState || records.isEmpty()) {
             messages = 0;
             optionallyCommitAllOffsets();
             optionallySeekToTheLastCommittedOffsets();
