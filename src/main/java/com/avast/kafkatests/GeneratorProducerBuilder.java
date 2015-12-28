@@ -1,9 +1,9 @@
 package com.avast.kafkatests;
 
-public class ProducerBuilder implements ComponentBuilder {
+public class GeneratorProducerBuilder implements ComponentBuilder {
     @Override
     public RunnableComponent newInstance() {
-        return new Kafka09Producer(
+        return new GeneratorProducer(
                 Configuration.producerConfiguration(),
                 Configuration.kafkaTopic(),
                 Configuration.producerInstances(),

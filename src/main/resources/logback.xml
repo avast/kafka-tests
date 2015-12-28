@@ -13,6 +13,6 @@
     <logger name="org.apache.kafka" level="WARN"/>
 
     <logger name="com.avast.kafkatests" level="TRACE"/>
-    <logger name="com.avast.kafkatests.Kafka09Producer" level="DEBUG"/>
+    <logger name="com.avast.kafkatests.GeneratorProducer" level="DEBUG"/>
     <logger name="com.avast.kafkatests.ResultsUpdater" level="DEBUG"/>
 </configuration>

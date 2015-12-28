@@ -19,7 +19,7 @@ import java.util.stream.IntStream;
 /**
  * Producer of test messages to Kafka.
  */
-public class Kafka09Producer extends AbstractComponent {
+public class GeneratorProducer extends AbstractComponent {
     private final ExecutorService executor;
     private final AtomicBoolean finish = new AtomicBoolean(false);
     private final String topic;
@@ -29,9 +29,9 @@ public class Kafka09Producer extends AbstractComponent {
     private final Duration shutdownTimeout;
     private final StateDao stateDao;
 
-    public Kafka09Producer(Properties configuration, String topic, int instances, int messagesPerGroup,
-                           Duration producerSlowDown, Duration shutdownTimeout,
-                           StateDao stateDao) {
+    public GeneratorProducer(Properties configuration, String topic, int instances, int messagesPerGroup,
+                             Duration producerSlowDown, Duration shutdownTimeout,
+                             StateDao stateDao) {
         logger.info("Starting instance");
 
         this.topic = topic;
@@ -109,7 +109,7 @@ public class Kafka09Producer extends AbstractComponent {
 
     public static void main(String[] args) {
         Utils.logAllUnhandledExceptions();
-        Utils.closeOnShutdown(new ProducerBuilder().newInstance());
+        Utils.closeOnShutdown(new GeneratorProducerBuilder().newInstance());
         Utils.loopWithNoExit();
     }
 }

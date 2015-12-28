@@ -152,7 +152,7 @@ public class ChaoticManager implements RunnableComponent {
     }
 
     private enum ComponentType {
-        producer(new ProducerBuilder()),
+        producer(new GeneratorProducerBuilder()),
         consumer_autocommit(new AutoCommitConsumerBuilder()),
         consumer_seeking(new SeekingConsumerBuilder());
 

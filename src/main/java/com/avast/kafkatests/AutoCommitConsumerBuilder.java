@@ -3,7 +3,7 @@ package com.avast.kafkatests;
 public class AutoCommitConsumerBuilder implements ComponentBuilder {
     @Override
     public RunnableComponent newInstance() {
-        return new Kafka09AutoCommitConsumer(
+        return new AutoCommitConsumer(
                 Configuration.consumerConfiguration("KafkaTestsAutoCommit", true),
                 Configuration.kafkaTopic(),
                 Configuration.consumerInstancesAutoCommit(),

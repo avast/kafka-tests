@@ -34,10 +34,10 @@ Scenario and Initial Analysis
 
 ````sh
 ./erase_all_data.sh
-./run_Kafka09AutoCommitConsumer.sh &
-./run_Kafka09SeekingConsumer.sh &
+./run_AutoCommitConsumer.sh &
+./run_SeekingConsumer.sh &
 ./run_ResultsUpdater.sh &
-./run_Kafka09Producer.sh &
+./run_GeneratorProducer.sh &
 ````
 
 - Tail logs of ResultsUpdater to detect the issue.
@@ -50,10 +50,10 @@ tail -f logs/ResultsUpdater_*.log
 ### Try to break Kafka or consumer
 
 - Add more and more consumers with about 10 seconds delay until the issue occurs (typically 5 - 10 instances).
-    - The issue was reproduced with both consumer types (Kafka09AutoCommitConsumer, Kafka09SeekingConsumer) on a multiprocessor system
+    - The issue was reproduced with both consumer types (AutoCommitConsumer, SeekingConsumer) on a multiprocessor system
 
 ````sh
-./run_Kafka09AutoCommitConsumer.sh &
+./run_AutoCommitConsumer.sh &
 ````
 
 - Search the following pattern in logs.
@@ -150,7 +150,7 @@ tail -f logs/ResultsUpdater_*.log
 - Touch Kafka's consumer group by adding another consumer which forces another rebalancing.
 
 ````sh
-./run_Kafka09AutoCommitConsumer.sh &
+./run_AutoCommitConsumer.sh &
 ````
 
 - The missing data surprisingly appears in Kafka and are consumed (it was 15 minutes after stop of producers in my case).
@@ -222,116 +222,116 @@ tail -f logs/ResultsUpdater_*.log
 
 - You can find details in consumer logs using logged IDs from `Not yet:` line (`grep -rI '1fedd86b-76d8-4160-91ad-116a43dd7b40' .`).
 - Search big delay in timestamps of log messages.
-- logs/Kafka09AutoCommitConsumer_2015-12-09_09:06:43.log
+- logs/AutoCommitConsumer_2015-12-09_09:06:43.log
     - Partition kafka-test/6 wasn't consumed for about 15 minutes.
 
 ````
-2015-12-09 09:12:06.907 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 1faae32a-6bd6-47c1-92c7-bb65933f548b, 98, kafka-test/5/5598 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:12:06.908 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 1faae32a-6bd6-47c1-92c7-bb65933f548b, 99, kafka-test/5/5599 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:27:48.217 INFO  o.a.k.c.c.i.AbstractCoordinator     [Kafka09AutoCommitConsumer-worker-0]: Attempt to heart beat failed since the group is rebalancing, try to re-join group. (AbstractCoordinator.java:633)
-2015-12-09 09:27:48.218 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-5] (Kafka09AutoCommitConsumer.java:90)
-2015-12-09 09:27:51.130 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-2015-12-09 09:27:51.132 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 46, kafka-test/6/3092 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:27:51.132 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 46, kafka-test/6/3093 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:27:51.132 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 47, kafka-test/6/3094 (Kafka09AutoCommitConsumer.java:76)
+2015-12-09 09:12:06.907 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 1faae32a-6bd6-47c1-92c7-bb65933f548b, 98, kafka-test/5/5598 (AutoCommitConsumer.java:76)
+2015-12-09 09:12:06.908 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 1faae32a-6bd6-47c1-92c7-bb65933f548b, 99, kafka-test/5/5599 (AutoCommitConsumer.java:76)
+2015-12-09 09:27:48.217 INFO  o.a.k.c.c.i.AbstractCoordinator     [AutoCommitConsumer-worker-0]: Attempt to heart beat failed since the group is rebalancing, try to re-join group. (AbstractCoordinator.java:633)
+2015-12-09 09:27:48.218 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-5] (AutoCommitConsumer.java:90)
+2015-12-09 09:27:51.130 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
+2015-12-09 09:27:51.132 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 46, kafka-test/6/3092 (AutoCommitConsumer.java:76)
+2015-12-09 09:27:51.132 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 46, kafka-test/6/3093 (AutoCommitConsumer.java:76)
+2015-12-09 09:27:51.132 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 47, kafka-test/6/3094 (AutoCommitConsumer.java:76)
 ````
 
 - Find which node was responsible for this partition.
 
 ````
 grep -rI 'Rebalance callback.*kafka-test-6' . | grep -v README | sort -t : -k 5
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:03:32.888 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-1, kafka-test-2, kafka-test-0, kafka-test-7, kafka-test-8, kafka-test-5, kafka-test-6, kafka-test-3, kafka-test-4] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09SeekingConsumer_2015-12-09_09:03:40.log:2015-12-09 09:03:41.410 INFO  c.a.kafkatests.SeekingConsumerLogic [Kafka09SeekingConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-1, kafka-test-2, kafka-test-0, kafka-test-7, kafka-test-8, kafka-test-5, kafka-test-6, kafka-test-3, kafka-test-4] (SeekingConsumerLogic.java:115)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:05:14.901 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-1, kafka-test-2, kafka-test-0, kafka-test-7, kafka-test-8, kafka-test-5, kafka-test-6, kafka-test-3, kafka-test-4] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:05:14.908 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-7, kafka-test-8, kafka-test-5, kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:05:26.914 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-7, kafka-test-8, kafka-test-5, kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:23.log:2015-12-09 09:05:26.931 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-7, kafka-test-8, kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:23.log:2015-12-09 09:05:35.935 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-7, kafka-test-8, kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:05:35.943 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-5, kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:05:59.954 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-5, kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:23.log:2015-12-09 09:05:59.961 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-7, kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:23.log:2015-12-09 09:06:23.966 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-7, kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:06:23.981 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:06:44.993 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:06:45.013 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:07:12.028 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:07:12.032 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:07:36.039 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:07:36.047 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:09:27.063 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:09:27.077 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:09:45.080 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:09:45.097 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:09:48.100 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:09:48.123 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:27:51.126 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-./logs/Kafka09AutoCommitConsumer_2015-12-09_09:06:43.log:2015-12-09 09:27:51.130 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:03:32.888 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-1, kafka-test-2, kafka-test-0, kafka-test-7, kafka-test-8, kafka-test-5, kafka-test-6, kafka-test-3, kafka-test-4] (AutoCommitConsumer.java:95)
+./logs/SeekingConsumer_2015-12-09_09:03:40.log:2015-12-09 09:03:41.410 INFO  c.a.kafkatests.SeekingConsumerLogic [SeekingConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-1, kafka-test-2, kafka-test-0, kafka-test-7, kafka-test-8, kafka-test-5, kafka-test-6, kafka-test-3, kafka-test-4] (SeekingConsumerLogic.java:115)
+./logs/AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:05:14.901 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-1, kafka-test-2, kafka-test-0, kafka-test-7, kafka-test-8, kafka-test-5, kafka-test-6, kafka-test-3, kafka-test-4] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:05:14.908 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-7, kafka-test-8, kafka-test-5, kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:05:26.914 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-7, kafka-test-8, kafka-test-5, kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:05:23.log:2015-12-09 09:05:26.931 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-7, kafka-test-8, kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:05:23.log:2015-12-09 09:05:35.935 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-7, kafka-test-8, kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:05:35.943 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-5, kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:05:59.954 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-5, kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:05:23.log:2015-12-09 09:05:59.961 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-7, kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:05:23.log:2015-12-09 09:06:23.966 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-7, kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:06:23.981 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:06:44.993 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:06:45.013 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:07:12.028 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:07:12.032 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:07:36.039 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:07:36.047 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:05:33.log:2015-12-09 09:09:27.063 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:09:27.077 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:09:45.080 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:09:45.097 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:09:48.100 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:09:48.123 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
+./logs/AutoCommitConsumer_2015-12-09_09:03:30.log:2015-12-09 09:27:51.126 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (AutoCommitConsumer.java:90)
+./logs/AutoCommitConsumer_2015-12-09_09:06:43.log:2015-12-09 09:27:51.130 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
 ````
 
-- logs/Kafka09AutoCommitConsumer_2015-12-09_09:03:30.log
+- logs/AutoCommitConsumer_2015-12-09_09:03:30.log
     - This consumer instance owned the partition but it wasn't consuming it.
     - It was analyzed using jvisualvm according to `Profiler Agent` message (only this one was opened in jvisualvm, much higher CPU in htop -> PID -> jvisualvm).
 
 ````
-2015-12-09 09:09:48.100 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-2015-12-09 09:09:48.123 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-2015-12-09 09:09:48.124 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 42, kafka-test/6/3084 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:09:48.124 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 42, kafka-test/6/3085 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:09:48.125 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 43, kafka-test/6/3086 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:09:48.125 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 43, kafka-test/6/3087 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:09:48.125 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 44, kafka-test/6/3088 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:09:48.125 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 44, kafka-test/6/3089 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:09:48.125 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 45, kafka-test/6/3090 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:09:48.125 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 45, kafka-test/6/3091 (Kafka09AutoCommitConsumer.java:76)
+2015-12-09 09:09:48.100 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (AutoCommitConsumer.java:90)
+2015-12-09 09:09:48.123 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
+2015-12-09 09:09:48.124 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 42, kafka-test/6/3084 (AutoCommitConsumer.java:76)
+2015-12-09 09:09:48.124 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 42, kafka-test/6/3085 (AutoCommitConsumer.java:76)
+2015-12-09 09:09:48.125 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 43, kafka-test/6/3086 (AutoCommitConsumer.java:76)
+2015-12-09 09:09:48.125 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 43, kafka-test/6/3087 (AutoCommitConsumer.java:76)
+2015-12-09 09:09:48.125 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 44, kafka-test/6/3088 (AutoCommitConsumer.java:76)
+2015-12-09 09:09:48.125 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 44, kafka-test/6/3089 (AutoCommitConsumer.java:76)
+2015-12-09 09:09:48.125 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 45, kafka-test/6/3090 (AutoCommitConsumer.java:76)
+2015-12-09 09:09:48.125 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 45, kafka-test/6/3091 (AutoCommitConsumer.java:76)
 Profiler Agent: Waiting for connection on port 5140 (Protocol version: 15)
 Profiler Agent: Established connection with the tool
 Profiler Agent: Local accelerated session
 Profiler Agent: Connection with agent closed
-2015-12-09 09:27:51.125 INFO  o.a.k.c.c.i.AbstractCoordinator     [Kafka09AutoCommitConsumer-worker-0]: Attempt to heart beat failed since the group is rebalancing, try to re-join group. (AbstractCoordinator.java:633)
-2015-12-09 09:27:51.126 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (Kafka09AutoCommitConsumer.java:90)
-2015-12-09 09:27:51.131 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-7] (Kafka09AutoCommitConsumer.java:95)
+2015-12-09 09:27:51.125 INFO  o.a.k.c.c.i.AbstractCoordinator     [AutoCommitConsumer-worker-0]: Attempt to heart beat failed since the group is rebalancing, try to re-join group. (AbstractCoordinator.java:633)
+2015-12-09 09:27:51.126 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-6] (AutoCommitConsumer.java:90)
+2015-12-09 09:27:51.131 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-7] (AutoCommitConsumer.java:95)
 ````
 
-- logs/Kafka09AutoCommitConsumer_2015-12-09_09:06:43.log
+- logs/AutoCommitConsumer_2015-12-09_09:06:43.log
     - This consumer instance started owning the partition after touch by execution of another consumer, rebalancing and unblocking.
     - Consuming from this partition was blocked for 15 minutes.
     - External action was needed to unblock consuming.
 
 ````
-2015-12-09 09:12:06.907 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 1faae32a-6bd6-47c1-92c7-bb65933f548b, 98, kafka-test/5/5598 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:12:06.908 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 1faae32a-6bd6-47c1-92c7-bb65933f548b, 99, kafka-test/5/5599 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:27:48.217 INFO  o.a.k.c.c.i.AbstractCoordinator     [Kafka09AutoCommitConsumer-worker-0]: Attempt to heart beat failed since the group is rebalancing, try to re-join group. (AbstractCoordinator.java:633)
-2015-12-09 09:27:48.218 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-5] (Kafka09AutoCommitConsumer.java:90)
-2015-12-09 09:27:51.130 INFO  c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (Kafka09AutoCommitConsumer.java:95)
-2015-12-09 09:27:51.132 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 46, kafka-test/6/3092 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:27:51.132 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 46, kafka-test/6/3093 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:27:51.132 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 47, kafka-test/6/3094 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:27:51.132 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 47, kafka-test/6/3095 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:27:51.132 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 48, kafka-test/6/3096 (Kafka09AutoCommitConsumer.java:76)
-2015-12-09 09:27:51.132 TRACE c.a.k.Kafka09AutoCommitConsumer     [Kafka09AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 48, kafka-test/6/3097 (Kafka09AutoCommitConsumer.java:76)
+2015-12-09 09:12:06.907 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 1faae32a-6bd6-47c1-92c7-bb65933f548b, 98, kafka-test/5/5598 (AutoCommitConsumer.java:76)
+2015-12-09 09:12:06.908 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 1faae32a-6bd6-47c1-92c7-bb65933f548b, 99, kafka-test/5/5599 (AutoCommitConsumer.java:76)
+2015-12-09 09:27:48.217 INFO  o.a.k.c.c.i.AbstractCoordinator     [AutoCommitConsumer-worker-0]: Attempt to heart beat failed since the group is rebalancing, try to re-join group. (AbstractCoordinator.java:633)
+2015-12-09 09:27:48.218 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, revoked: [kafka-test-5] (AutoCommitConsumer.java:90)
+2015-12-09 09:27:51.130 INFO  c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Rebalance callback, assigned: [kafka-test-6] (AutoCommitConsumer.java:95)
+2015-12-09 09:27:51.132 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 46, kafka-test/6/3092 (AutoCommitConsumer.java:76)
+2015-12-09 09:27:51.132 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 46, kafka-test/6/3093 (AutoCommitConsumer.java:76)
+2015-12-09 09:27:51.132 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 47, kafka-test/6/3094 (AutoCommitConsumer.java:76)
+2015-12-09 09:27:51.132 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 47, kafka-test/6/3095 (AutoCommitConsumer.java:76)
+2015-12-09 09:27:51.132 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 48, kafka-test/6/3096 (AutoCommitConsumer.java:76)
+2015-12-09 09:27:51.132 TRACE c.a.k.AutoCommitConsumer     [AutoCommitConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 48, kafka-test/6/3097 (AutoCommitConsumer.java:76)
 ````
 
-- logs/Kafka09SeekingConsumer_2015-12-09_09:03:40.log
+- logs/SeekingConsumer_2015-12-09_09:03:40.log
     - Second consumer group wasn't affected at all.
 
 ````
-2015-12-09 09:09:43.695 TRACE c.a.kafkatests.SeekingConsumerLogic [Kafka09SeekingConsumer-worker-0]: Message skip: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 0, kafka-test/6/3001 (SeekingConsumerLogic.java:58)
+2015-12-09 09:09:43.695 TRACE c.a.kafkatests.SeekingConsumerLogic [SeekingConsumer-worker-0]: Message skip: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 0, kafka-test/6/3001 (SeekingConsumerLogic.java:58)
 ...
-2015-12-09 09:09:44.619 TRACE c.a.kafkatests.SeekingConsumerLogic [Kafka09SeekingConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 0, kafka-test/6/3001 (SeekingConsumerLogic.java:53)
+2015-12-09 09:09:44.619 TRACE c.a.kafkatests.SeekingConsumerLogic [SeekingConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 0, kafka-test/6/3001 (SeekingConsumerLogic.java:53)
 ...
-2015-12-09 09:09:53.529 TRACE c.a.kafkatests.SeekingConsumerLogic [Kafka09SeekingConsumer-worker-0]: Message skip: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 99, kafka-test/6/3199 (SeekingConsumerLogic.java:58)
+2015-12-09 09:09:53.529 TRACE c.a.kafkatests.SeekingConsumerLogic [SeekingConsumer-worker-0]: Message skip: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 99, kafka-test/6/3199 (SeekingConsumerLogic.java:58)
 ...
-2015-12-09 09:09:54.338 TRACE c.a.kafkatests.SeekingConsumerLogic [Kafka09SeekingConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 99, kafka-test/6/3199 (SeekingConsumerLogic.java:53)
+2015-12-09 09:09:54.338 TRACE c.a.kafkatests.SeekingConsumerLogic [SeekingConsumer-worker-0]: Message consumed: fb1e2354-8c5d-4faf-a2c3-2605c7eeb29f, 99, kafka-test/6/3199 (SeekingConsumerLogic.java:53)
 ````
 
 ````
-2015-12-09 09:09:43.497 TRACE c.a.kafkatests.SeekingConsumerLogic [Kafka09SeekingConsumer-worker-0]: Message skip: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 0, kafka-test/6/3000 (SeekingConsumerLogic.java:58)
+2015-12-09 09:09:43.497 TRACE c.a.kafkatests.SeekingConsumerLogic [SeekingConsumer-worker-0]: Message skip: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 0, kafka-test/6/3000 (SeekingConsumerLogic.java:58)
 ...
-2015-12-09 09:09:44.619 TRACE c.a.kafkatests.SeekingConsumerLogic [Kafka09SeekingConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 0, kafka-test/6/3000 (SeekingConsumerLogic.java:53)
+2015-12-09 09:09:44.619 TRACE c.a.kafkatests.SeekingConsumerLogic [SeekingConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 0, kafka-test/6/3000 (SeekingConsumerLogic.java:53)
 ...
-2015-12-09 09:09:53.529 TRACE c.a.kafkatests.SeekingConsumerLogic [Kafka09SeekingConsumer-worker-0]: Message skip: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 99, kafka-test/6/3198 (SeekingConsumerLogic.java:58)
+2015-12-09 09:09:53.529 TRACE c.a.kafkatests.SeekingConsumerLogic [SeekingConsumer-worker-0]: Message skip: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 99, kafka-test/6/3198 (SeekingConsumerLogic.java:58)
 ...
-2015-12-09 09:09:54.338 TRACE c.a.kafkatests.SeekingConsumerLogic [Kafka09SeekingConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 99, kafka-test/6/3198 (SeekingConsumerLogic.java:53)
+2015-12-09 09:09:54.338 TRACE c.a.kafkatests.SeekingConsumerLogic [SeekingConsumer-worker-0]: Message consumed: 29aa07c5-4aa7-4d32-a1bd-2d17744ffedb, 99, kafka-test/6/3198 (SeekingConsumerLogic.java:53)
 ````
 
 

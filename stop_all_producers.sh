@@ -1,3 +1,3 @@
 #!/bin/bash
 
-kill `pgrep --full 'Kafka09Producer'`
+kill `pgrep --full 'GeneratorProducer'`

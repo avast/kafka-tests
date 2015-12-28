@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CLASS=Kafka09AutoCommitConsumer
+CLASS=SeekingConsumer
 
 LOGFILE="logs/${CLASS}_`date +%F_%T`.log"
 mkdir -p `dirname ${LOGFILE}`

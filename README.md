@@ -81,9 +81,9 @@ FLUSHALL
 
 - Update `Configuration` according to your needs.
 - Start `ResultsUpdater` always in one instance.
-- Start one or more instances of `Kafka09AutoCommitConsumer` and `Kafka09SeekingConsumer`.
+- Start one or more instances of `AutoCommitConsumer` and `SeekingConsumer`.
     - Note there may be multiple consumers/threads inside based on `Configuration`.
-- Start one or more instances of `Kafka09Producer`
+- Start one or more instances of `GeneratorProducer`
 
 
 ### More instances, rebalancing
@@ -105,13 +105,13 @@ kill PID
 - Shutdown all producers first.
 
 ````sh
-kill `pgrep --full 'Kafka09Producer'`
+kill `pgrep --full 'GeneratorProducer'`
 ````
 
 - Let all consumers to consume all messages from Kafka.
     
 ````sh
-kill `pgrep --full 'Kafka09.*Consumer'`
+kill `pgrep --full 'Consumer'`
 ````
 
 - Let results updater to process all data in database.

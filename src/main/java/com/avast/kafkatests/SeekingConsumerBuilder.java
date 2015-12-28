@@ -3,7 +3,7 @@ package com.avast.kafkatests;
 public class SeekingConsumerBuilder implements ComponentBuilder {
     @Override
     public RunnableComponent newInstance() {
-        return new Kafka09SeekingConsumer(
+        return new SeekingConsumer(
                 Configuration.consumerConfiguration("KafkaTestsSeeking", false),
                 Configuration.kafkaTopic(),
                 Configuration.consumerInstancesSeeking(),
