@@ -87,7 +87,12 @@ public class SeekingConsumerLogic implements ConsumerRebalanceListener {
         }
 
         LOGGER.debug("Committing all offsets...");
-        consumer.commitSync();
+
+        try {
+            consumer.commitSync();
+        } catch (CommitFailedException e) {
+            LOGGER.error("Commit of offsets failed: {}", e, e);
+        }
     }
 
     private void optionallySeekToTheLastCommittedOffsets() {
