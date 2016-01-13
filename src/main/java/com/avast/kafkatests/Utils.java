@@ -47,8 +47,12 @@ public class Utils {
         try {
             LOGGER.debug("Waiting for termination of executor: {}, max {} ms, {}", name, timeout.toMillis(), executor);
             executor.shutdown();
-            executor.awaitTermination(timeout.toMillis(), TimeUnit.MILLISECONDS);
-            LOGGER.debug("Waiting for termination of executor finished: {}, max {} ms, {}", name, timeout.toMillis(), executor);
+
+            if (executor.awaitTermination(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+                LOGGER.debug("Waiting for termination of executor finished: {}, max {} ms, {}", name, timeout.toMillis(), executor);
+            } else {
+                LOGGER.error("Waiting for termination of executor timed out: {}, max {} ms, {}", name, timeout.toMillis(), executor);
+            }
         } catch (InterruptedException e) {
             LOGGER.error("Waiting for termination of executor interrupted: {}, max {} ms, {}, {}", name, timeout.toMillis(), executor, e, e);
         }
