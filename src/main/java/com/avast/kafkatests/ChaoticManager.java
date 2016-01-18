@@ -118,12 +118,12 @@ public class ChaoticManager implements RunnableComponent {
                 .map(Enum::toString)
                 .collect(Collectors.joining(", "));
 
-        LOGGER.info("Usage: {} componentType minComponents maxComponents decisionsPerUpdate updatePeriodMs", ChaoticManager.class.getSimpleName());
+        LOGGER.info("Usage: {} componentType", ChaoticManager.class.getSimpleName());
         LOGGER.info("Usage: Supported component types: {}", components);
     }
 
     public static void main(String[] args) {
-        if (args.length < 5) {
+        if (args.length < 1) {
             usage();
             LOGGER.error("Not enough arguments");
             System.exit(1);
