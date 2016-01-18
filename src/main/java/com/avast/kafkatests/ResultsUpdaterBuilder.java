@@ -3,12 +3,14 @@ package com.avast.kafkatests;
 public class ResultsUpdaterBuilder implements ComponentBuilder {
     @Override
     public RunnableComponent newInstance() {
+        Configuration configuration = new Configuration();
+
         return new ResultsUpdater(
-                Configuration.shutdownTimeout(),
-                Configuration.updateStatePeriod(),
-                new RedisStateDao(Configuration.redisServer()),
-                Configuration.messagesPerGroup(),
-                Configuration.checksBeforeFailure(),
-                Configuration.consumerTypes());
+                configuration.shutdownTimeout(),
+                configuration.updateStatePeriod(),
+                new RedisStateDao(configuration.redisServer()),
+                configuration.messagesPerGroup(),
+                configuration.checksBeforeFailure(),
+                configuration.consumerTypes());
     }
 }

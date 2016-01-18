@@ -3,14 +3,16 @@ package com.avast.kafkatests;
 public class SeekingConsumerBuilder implements ComponentBuilder {
     @Override
     public RunnableComponent newInstance() {
+        Configuration configuration = new Configuration();
+
         return new SeekingConsumer(
-                Configuration.consumerConfiguration("KafkaTestsSeeking", false),
-                Configuration.kafkaTopic(),
-                Configuration.consumerInstancesSeeking(),
-                Configuration.consumerPollTimeout(),
-                Configuration.shutdownTimeout(),
-                new RedisStateDao(Configuration.redisServer()),
-                Configuration.messagesToChangeState(),
-                Configuration.percentFailureProbability());
+                configuration.consumerConfiguration("KafkaTestsSeeking", false),
+                configuration.kafkaTopic(),
+                configuration.consumerInstancesSeeking(),
+                configuration.consumerPollTimeout(),
+                configuration.shutdownTimeout(),
+                new RedisStateDao(configuration.redisServer()),
+                configuration.messagesToChangeState(),
+                configuration.percentFailureProbability());
     }
 }

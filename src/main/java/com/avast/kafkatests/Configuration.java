@@ -1,5 +1,7 @@
 package com.avast.kafkatests;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
@@ -9,23 +11,62 @@ import java.util.List;
 import java.util.Properties;
 
 public class Configuration {
-    public static String redisServer() {
-        return "localhost";
+    /**
+     * Name of root configuration object.
+     */
+    private static final String CFG_ROOT = "kafka-tests";
+
+    private final String redisServer;
+    private final String kafkaBrokers;
+    private final String kafkaTopic;
+    private final Duration shutdownTimeout;
+    private final int messagesPerGroup;
+    private final int producerInstances;
+    private final Duration producerSlowDown;
+    private final int consumerInstancesAutoCommit;
+    private final int consumerInstancesSeeking;
+    private final Duration consumerPollTimeout;
+    private final Duration updateStatePeriod;
+    private final int checksBeforeFailure;
+    private final int messagesToChangeState;
+    private final int percentFailureProbability;
+
+    public Configuration() {
+        Config config = ConfigFactory.load().getConfig(CFG_ROOT);
+
+        redisServer = config.getString("redisServer");
+        kafkaBrokers = config.getString("kafkaBrokers");
+        kafkaTopic = config.getString("kafkaTopic");
+        shutdownTimeout = config.getDuration("shutdownTimeout");
+        messagesPerGroup = config.getInt("messagesPerGroup");
+        producerInstances = config.getInt("producerInstances");
+        producerSlowDown = config.getDuration("producerSlowDown");
+        consumerInstancesAutoCommit = config.getInt("consumerInstancesAutoCommit");
+        consumerInstancesSeeking = config.getInt("consumerInstancesSeeking");
+        consumerPollTimeout = config.getDuration("consumerPollTimeout");
+        updateStatePeriod = config.getDuration("updateStatePeriod");
+        checksBeforeFailure = config.getInt("checksBeforeFailure");
+        messagesToChangeState = config.getInt("messagesToChangeState");
+        percentFailureProbability = config.getInt("percentFailureProbability");
     }
 
-    private static String kafkaBrokers() {
-        return "localhost:9092";
+    public String redisServer() {
+        return redisServer;
     }
 
-    public static String kafkaTopic() {
-        return "kafka-test";
+    private String kafkaBrokers() {
+        return kafkaBrokers;
     }
 
-    public static Duration shutdownTimeout() {
-        return Duration.ofSeconds(10);
+    public String kafkaTopic() {
+        return kafkaTopic;
     }
 
-    public static Properties producerConfiguration() {
+    public Duration shutdownTimeout() {
+        return shutdownTimeout;
+    }
+
+    public Properties producerConfiguration() {
         Properties properties = new Properties();
 
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBrokers());
@@ -33,7 +74,7 @@ public class Configuration {
         return properties;
     }
 
-    public static Properties consumerConfiguration(String groupId, boolean autoCommit) {
+    public Properties consumerConfiguration(String groupId, boolean autoCommit) {
         Properties properties = new Properties();
 
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBrokers());
@@ -44,47 +85,47 @@ public class Configuration {
         return properties;
     }
 
-    public static int messagesPerGroup() {
-        return 100;
+    public int messagesPerGroup() {
+        return messagesPerGroup;
     }
 
-    public static int producerInstances() {
-        return 10;
+    public int producerInstances() {
+        return producerInstances;
     }
 
-    public static Duration producerSlowDown() {
-        return Duration.ofMillis(100);
+    public Duration producerSlowDown() {
+        return producerSlowDown;
     }
 
-    public static int consumerInstancesAutoCommit() {
-        return 1;
+    public int consumerInstancesAutoCommit() {
+        return consumerInstancesAutoCommit;
     }
 
-    public static int consumerInstancesSeeking() {
-        return 1;
+    public int consumerInstancesSeeking() {
+        return consumerInstancesSeeking;
     }
 
-    public static Duration consumerPollTimeout() {
-        return Duration.ofSeconds(3);
+    public Duration consumerPollTimeout() {
+        return consumerPollTimeout;
     }
 
-    public static Duration updateStatePeriod() {
-        return Duration.ofSeconds(5);
+    public Duration updateStatePeriod() {
+        return updateStatePeriod;
     }
 
-    public static int checksBeforeFailure() {
-        return 15;
+    public int checksBeforeFailure() {
+        return checksBeforeFailure;
     }
 
-    public static int messagesToChangeState() {
-        return 100;
+    public int messagesToChangeState() {
+        return messagesToChangeState;
     }
 
-    public static int percentFailureProbability() {
-        return 40;
+    public int percentFailureProbability() {
+        return percentFailureProbability;
     }
 
-    public static List<ConsumerType> consumerTypes() {
+    public List<ConsumerType> consumerTypes() {
         return Arrays.asList(ConsumerType.values());
     }
 }
