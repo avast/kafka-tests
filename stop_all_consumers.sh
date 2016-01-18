@@ -1,3 +1,3 @@
 #!/bin/bash
 
-kill `pgrep --full 'Consumer'`
+kill `pgrep -f 'Consumer'`

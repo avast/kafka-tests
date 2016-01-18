@@ -1,3 +1,3 @@
 #!/bin/bash
 
-kill `pgrep --full 'ResultsUpdater'`
+kill `pgrep -f 'ResultsUpdater'`

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-kill `pgrep --full 'GeneratorProducer'`
+kill `pgrep -f 'GeneratorProducer'`
