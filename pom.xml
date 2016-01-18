@@ -19,7 +19,7 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>0.9.0.0-localbuild</version>
+            <version>0.9.0.1-SNAPSHOT-localbuild</version>
         </dependency>
 
         <dependency>
