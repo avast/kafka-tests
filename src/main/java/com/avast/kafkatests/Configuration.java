@@ -31,6 +31,11 @@ public class Configuration {
     private final int messagesToChangeState;
     private final int percentFailureProbability;
 
+    private final int chaoticManagerMinComponents;
+    private final int chaoticManagerMaxComponents;
+    private final int chaoticManagerDecisionsPerUpdate;
+    private final Duration chaoticManagerUpdatePeriod;
+
     public Configuration() {
         Config config = ConfigFactory.load().getConfig(CFG_ROOT);
 
@@ -48,28 +53,33 @@ public class Configuration {
         checksBeforeFailure = config.getInt("checksBeforeFailure");
         messagesToChangeState = config.getInt("messagesToChangeState");
         percentFailureProbability = config.getInt("percentFailureProbability");
+
+        chaoticManagerMinComponents = config.getInt("chaoticManagerMinComponents");
+        chaoticManagerMaxComponents = config.getInt("chaoticManagerMaxComponents");
+        chaoticManagerDecisionsPerUpdate = config.getInt("chaoticManagerDecisionsPerUpdate");
+        chaoticManagerUpdatePeriod = config.getDuration("chaoticManagerUpdatePeriod");
     }
 
-    public String redisServer() {
+    public String getRedisServer() {
         return redisServer;
     }
 
-    private String kafkaBrokers() {
+    private String getKafkaBrokers() {
         return kafkaBrokers;
     }
 
-    public String kafkaTopic() {
+    public String getKafkaTopic() {
         return kafkaTopic;
     }
 
-    public Duration shutdownTimeout() {
+    public Duration getShutdownTimeout() {
         return shutdownTimeout;
     }
 
     public Properties producerConfiguration() {
         Properties properties = new Properties();
 
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBrokers());
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, getKafkaBrokers());
 
         return properties;
     }
@@ -77,7 +87,7 @@ public class Configuration {
     public Properties consumerConfiguration(String groupId, boolean autoCommit) {
         Properties properties = new Properties();
 
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBrokers());
+        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, getKafkaBrokers());
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -85,47 +95,63 @@ public class Configuration {
         return properties;
     }
 
-    public int messagesPerGroup() {
+    public int getMessagesPerGroup() {
         return messagesPerGroup;
     }
 
-    public int producerInstances() {
+    public int getProducerInstances() {
         return producerInstances;
     }
 
-    public Duration producerSlowDown() {
+    public Duration getProducerSlowDown() {
         return producerSlowDown;
     }
 
-    public int consumerInstancesAutoCommit() {
+    public int getConsumerInstancesAutoCommit() {
         return consumerInstancesAutoCommit;
     }
 
-    public int consumerInstancesSeeking() {
+    public int getConsumerInstancesSeeking() {
         return consumerInstancesSeeking;
     }
 
-    public Duration consumerPollTimeout() {
+    public Duration getConsumerPollTimeout() {
         return consumerPollTimeout;
     }
 
-    public Duration updateStatePeriod() {
+    public Duration getUpdateStatePeriod() {
         return updateStatePeriod;
     }
 
-    public int checksBeforeFailure() {
+    public int getChecksBeforeFailure() {
         return checksBeforeFailure;
     }
 
-    public int messagesToChangeState() {
+    public int getMessagesToChangeState() {
         return messagesToChangeState;
     }
 
-    public int percentFailureProbability() {
+    public int getPercentFailureProbability() {
         return percentFailureProbability;
     }
 
-    public List<ConsumerType> consumerTypes() {
+    public List<ConsumerType> getConsumerTypes() {
         return Arrays.asList(ConsumerType.values());
+    }
+
+    public int getChaoticManagerMinComponents() {
+        return chaoticManagerMinComponents;
+    }
+
+    public int getChaoticManagerMaxComponents() {
+        return chaoticManagerMaxComponents;
+    }
+
+    public int getChaoticManagerDecisionsPerUpdate() {
+        return chaoticManagerDecisionsPerUpdate;
+    }
+
+    public Duration getChaoticManagerUpdatePeriod() {
+        return chaoticManagerUpdatePeriod;
     }
 }

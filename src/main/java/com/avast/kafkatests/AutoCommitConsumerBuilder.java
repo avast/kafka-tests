@@ -7,10 +7,10 @@ public class AutoCommitConsumerBuilder implements ComponentBuilder {
 
         return new AutoCommitConsumer(
                 configuration.consumerConfiguration("KafkaTestsAutoCommit", true),
-                configuration.kafkaTopic(),
-                configuration.consumerInstancesAutoCommit(),
-                configuration.consumerPollTimeout(),
-                configuration.shutdownTimeout(),
-                new RedisStateDao(configuration.redisServer()));
+                configuration.getKafkaTopic(),
+                configuration.getConsumerInstancesAutoCommit(),
+                configuration.getConsumerPollTimeout(),
+                configuration.getShutdownTimeout(),
+                new RedisStateDao(configuration.getRedisServer()));
     }
 }

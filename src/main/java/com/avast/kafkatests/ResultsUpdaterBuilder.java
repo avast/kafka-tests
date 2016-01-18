@@ -6,11 +6,11 @@ public class ResultsUpdaterBuilder implements ComponentBuilder {
         Configuration configuration = new Configuration();
 
         return new ResultsUpdater(
-                configuration.shutdownTimeout(),
-                configuration.updateStatePeriod(),
-                new RedisStateDao(configuration.redisServer()),
-                configuration.messagesPerGroup(),
-                configuration.checksBeforeFailure(),
-                configuration.consumerTypes());
+                configuration.getShutdownTimeout(),
+                configuration.getUpdateStatePeriod(),
+                new RedisStateDao(configuration.getRedisServer()),
+                configuration.getMessagesPerGroup(),
+                configuration.getChecksBeforeFailure(),
+                configuration.getConsumerTypes());
     }
 }

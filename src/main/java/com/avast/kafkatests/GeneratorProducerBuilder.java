@@ -7,11 +7,11 @@ public class GeneratorProducerBuilder implements ComponentBuilder {
 
         return new GeneratorProducer(
                 configuration.producerConfiguration(),
-                configuration.kafkaTopic(),
-                configuration.producerInstances(),
-                configuration.messagesPerGroup(),
-                configuration.producerSlowDown(),
-                configuration.shutdownTimeout(),
-                new RedisStateDao(configuration.redisServer()));
+                configuration.getKafkaTopic(),
+                configuration.getProducerInstances(),
+                configuration.getMessagesPerGroup(),
+                configuration.getProducerSlowDown(),
+                configuration.getShutdownTimeout(),
+                new RedisStateDao(configuration.getRedisServer()));
     }
 }

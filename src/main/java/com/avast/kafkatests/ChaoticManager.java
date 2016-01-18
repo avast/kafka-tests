@@ -133,14 +133,14 @@ public class ChaoticManager implements RunnableComponent {
             Configuration configuration = new Configuration();
 
             ComponentType componentType = ComponentType.valueOf(args[0]);
-            int minComponents = Integer.parseInt(args[1]);
-            int maxComponents = Integer.parseInt(args[2]);
-            int decisionsPerUpdate = Integer.parseInt(args[3]);
-            Duration updatePeriod = Duration.ofMillis(Long.parseLong(args[4]));
 
             Utils.logAllUnhandledExceptions();
             Utils.closeOnShutdown(new ChaoticManager(componentType.getComponentBuilder(),
-                    minComponents, maxComponents, decisionsPerUpdate, updatePeriod, configuration.shutdownTimeout()));
+                    configuration.getChaoticManagerMinComponents(),
+                    configuration.getChaoticManagerMaxComponents(),
+                    configuration.getChaoticManagerDecisionsPerUpdate(),
+                    configuration.getChaoticManagerUpdatePeriod(),
+                    configuration.getShutdownTimeout()));
             Utils.loopWithNoExit();
         } catch (NumberFormatException e) {
             usage();

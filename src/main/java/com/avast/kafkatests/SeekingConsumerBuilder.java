@@ -7,12 +7,12 @@ public class SeekingConsumerBuilder implements ComponentBuilder {
 
         return new SeekingConsumer(
                 configuration.consumerConfiguration("KafkaTestsSeeking", false),
-                configuration.kafkaTopic(),
-                configuration.consumerInstancesSeeking(),
-                configuration.consumerPollTimeout(),
-                configuration.shutdownTimeout(),
-                new RedisStateDao(configuration.redisServer()),
-                configuration.messagesToChangeState(),
-                configuration.percentFailureProbability());
+                configuration.getKafkaTopic(),
+                configuration.getConsumerInstancesSeeking(),
+                configuration.getConsumerPollTimeout(),
+                configuration.getShutdownTimeout(),
+                new RedisStateDao(configuration.getRedisServer()),
+                configuration.getMessagesToChangeState(),
+                configuration.getPercentFailureProbability());
     }
 }
