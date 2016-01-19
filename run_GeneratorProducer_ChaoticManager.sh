@@ -3,6 +3,6 @@
 CLASS=ChaoticManager
 COMPONENT_TYPE=GeneratorProducer
 
-LOGFILE="logs/${CLASS}_${COMPONENT_TYPE}`date +%F_%T`.log"
+LOGFILE="logs/${CLASS}_${COMPONENT_TYPE}_`date +%F_%H-%M-%S`.log"
 mkdir -p `dirname ${LOGFILE}`
 exec java -cp "target/*:config" com.avast.kafkatests.${CLASS} ${COMPONENT_TYPE} >> ${LOGFILE}
