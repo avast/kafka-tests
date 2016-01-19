@@ -1,11 +1,15 @@
 package com.avast.kafkatests;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Total state.
  */
 public class TotalState {
+    public static TotalState INSTANCE = new TotalState(0, 0, 0, Collections.emptyList(),
+            0, 0, 0, Collections.emptyList(), 0, 0, 0, Collections.emptyList());
+
     private final int send;
     private final int sendConfirm;
     private final int sendFail;

@@ -4,7 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.exceptions.JedisException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -62,6 +64,8 @@ public class RedisStateDao implements StateDao {
     public void markSendFail(UUID key, int value) {
         try (Jedis redis = redisPool.getResource()) {
             redis.incr(KEY_MESSAGES_SEND_FAIL);
+        } catch (JedisException e) {
+            LOGGER.error("Redis operation failed: {}", e, e);
         }
     }
 
@@ -83,6 +87,8 @@ public class RedisStateDao implements StateDao {
             }
 
             redis.incr(counter);
+        } catch (JedisException e) {
+            LOGGER.error("Redis operation failed: {}", e, e);
         }
     }
 
@@ -90,6 +96,8 @@ public class RedisStateDao implements StateDao {
     public void markConsumeSeekingSkip(UUID key, int value) {
         try (Jedis redis = redisPool.getResource()) {
             redis.incr(KEY_MESSAGES_CONSUME_SEEKING_SKIP);
+        } catch (JedisException e) {
+            LOGGER.error("Redis operation failed: {}", e, e);
         }
     }
 
@@ -107,6 +115,9 @@ public class RedisStateDao implements StateDao {
                             getConsumerCounts(consumerTypes, redis, k),
                             readInt(redis, KEY_PREFIX_CHECKS + k)))
                     .collect(Collectors.toList());
+        } catch (JedisException e) {
+            LOGGER.error("Redis operation failed: {}", e, e);
+            return Collections.emptyList();
         }
     }
 
@@ -138,6 +149,8 @@ public class RedisStateDao implements StateDao {
         try (Jedis redis = redisPool.getResource()) {
             redis.incrBy(KEY_BITS_SUCCESS, messagesPerGroup);
             cleanup(redis, group);
+        } catch (JedisException e) {
+            LOGGER.error("Redis operation failed: {}", e, e);
         }
     }
 
@@ -163,6 +176,8 @@ public class RedisStateDao implements StateDao {
                     });
 
             cleanup(redis, group);
+        } catch (JedisException e) {
+            LOGGER.error("Redis operation failed: {}", e, e);
         }
     }
 
@@ -184,6 +199,8 @@ public class RedisStateDao implements StateDao {
     public void markChecks(UUID key) {
         try (Jedis redis = redisPool.getResource()) {
             redis.incr(KEY_PREFIX_CHECKS + key);
+        } catch (JedisException e) {
+            LOGGER.error("Redis operation failed: {}", e, e);
         }
     }
 
@@ -212,6 +229,9 @@ public class RedisStateDao implements StateDao {
                             .map(t -> new ConsumerCount(t, readInt(redis, KEY_BITS_FAILURE_CONSUME + ":" + t)))
                             .collect(Collectors.toList())
             );
+        } catch (JedisException e) {
+            LOGGER.error("Redis operation failed: {}", e, e);
+            return TotalState.INSTANCE;
         }
     }
 }
