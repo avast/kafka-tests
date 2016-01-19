@@ -13,6 +13,7 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
@@ -70,10 +71,14 @@ public class AutoCommitConsumer extends AbstractComponent implements ConsumerReb
             while (!finish.get()) {
                 ConsumerRecords<String, Integer> records = consumer.poll(pollTimeout.toMillis());
 
+                long startTime = System.nanoTime();
                 for (ConsumerRecord<String, Integer> record : records) {
                     logger.trace("Message consumed: {}, {}, {}/{}/{}", record.key(), record.value(), record.topic(), record.partition(), record.offset());
                     stateDao.markConsume(ConsumerType.autocommit, UUID.fromString(record.key()), record.value());
                 }
+                long duration = System.nanoTime() - startTime;
+
+                logger.debug("Processing of poll batch finished: {} messages, {} ms", records.count(), TimeUnit.NANOSECONDS.toMillis(duration));
             }
         } catch (Exception e) {
             logger.error("Unexpected exception occurred: {}", e, e);

@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
@@ -75,7 +76,12 @@ public class SeekingConsumer extends AbstractComponent {
 
             while (!finish.get()) {
                 ConsumerRecords<String, Integer> records = consumer.poll(pollTimeout.toMillis());
+
+                long startTime = System.nanoTime();
                 logic.processMessages(records);
+                long duration = System.nanoTime() - startTime;
+
+                logger.debug("Processing of poll batch finished: {} messages, {} ms", records.count(), TimeUnit.NANOSECONDS.toMillis(duration));
             }
 
             logic.optionallyCommitAllOffsets();
