@@ -54,7 +54,7 @@ public class SeekingConsumerLogic implements ConsumerRebalanceListener {
                 stateDao.markConsume(ConsumerType.seeking, UUID.fromString(record.key()), record.value());
                 break;
 
-            case ERROR:
+            case FAILURE:
                 LOGGER.trace("Message skip: {}, {}, {}/{}/{}", record.key(), record.value(), record.topic(), record.partition(), record.offset());
                 stateDao.markConsumeSeekingSkip(UUID.fromString(record.key()), record.value());
                 break;
@@ -72,7 +72,7 @@ public class SeekingConsumerLogic implements ConsumerRebalanceListener {
 
         if (previousState == State.SUCCESS) {
             if (random.nextInt(100) < percentFailureProbability) {
-                state = State.ERROR;
+                state = State.FAILURE;
             }
         }
 
@@ -96,7 +96,7 @@ public class SeekingConsumerLogic implements ConsumerRebalanceListener {
     }
 
     private void optionallySeekToTheLastCommittedOffsets() {
-        if (state != State.ERROR) {
+        if (state != State.FAILURE) {
             return;
         }
 
@@ -122,6 +122,6 @@ public class SeekingConsumerLogic implements ConsumerRebalanceListener {
     }
 
     private enum State {
-        SUCCESS, ERROR
+        SUCCESS, FAILURE
     }
 }
