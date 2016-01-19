@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SERVERS='kafka01-test kafka02-test kafka03-test'
-REMOTE_DIR='kafka-tests_new'
+REMOTE_DIR='kafka-tests'
 
 for server in ${SERVERS}
 do

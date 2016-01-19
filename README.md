@@ -116,6 +116,11 @@ FLUSHALL
 
 ### Issues found using this tool
 
+- Too slow processing in consumer times out its session
+    - This issue was only rediscovered, it's a direct consequence of new consumer single-thread API.
+    - [https://issues.apache.org/jira/browse/KAFKA-2985?focusedCommentId=15105539&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-15105539](https://issues.apache.org/jira/browse/KAFKA-2985?focusedCommentId=15105539&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-15105539)
+    - [https://issues.apache.org/jira/browse/KAFKA-2986](https://issues.apache.org/jira/browse/KAFKA-2986)
+    - [https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=61333789](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=61333789)
 - [Topic partition is not sometimes consumed after rebalancing of consumer group](https://github.com/avast/kafka-tests/tree/issue1/issues/1_rebalancing)
     - [https://issues.apache.org/jira/browse/KAFKA-2978](https://issues.apache.org/jira/browse/KAFKA-2978)
     - [https://github.com/apache/kafka/pull/666](https://github.com/apache/kafka/pull/666)
