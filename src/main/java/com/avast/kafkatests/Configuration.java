@@ -94,12 +94,13 @@ public class Configuration {
 
         // If processing of messages takes too long time, application code won't call poll() often enough, heart beats won't
         // be sent to brokers and consumer session will time out. Change default 30 second to a significantly larger value.
+        // This client conguration requires update of group.max.session.timeout.ms on broker.
         // https://issues.apache.org/jira/browse/KAFKA-2985
         // https://www.mail-archive.com/users@kafka.apache.org/msg16470.html
         // https://cwiki.apache.org/confluence/display/KAFKA/KIP-41%3A+KafkaConsumer+Max+Records
         // https://issues.apache.org/jira/browse/KAFKA-2986
         // http://www.confluent.io/blog/tutorial-getting-started-with-the-new-apache-kafka-0.9-consumer-client
-        properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "300000");
+        // properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "300000");
 
         return properties;
     }
