@@ -43,7 +43,7 @@ Install Kafka and ZooKeeper standard way, standalone or as a cluster.
 - Update replication factor and number of partitions according to your needs.
 
 ````sh
-ZOOKEEPER=localhost:2181 && cd ~/kafka && bin/kafka-topics.sh --zookeeper $ZOOKEEPER --create --replication-factor 1 --partitions 9 --topic kafka-test
+ZOOKEEPER=localhost:2181 && cd ~/kafka && bin/kafka-topics.sh --zookeeper $ZOOKEEPER --create --replication-factor 2 --partitions 9 --topic kafka-test
 ````
 
 
@@ -135,6 +135,53 @@ Occasionally increase number of partitions and check logs of producers and consu
 ````sh
 # Sometimes
 date ; /opt/kafka/bin/kafka-topics.sh --zookeeper localhost --topic kafka-test --alter --partitions 42
+````
+
+
+#### Shutdown broker test
+
+- Replication factor configured for a topic must be at least 2.
+- Stop and start one of the Kafka brokers.
+- Verify data loss of confirmed messages is in expected range (see `acks` parameter of producer)
+- Verify assignment of leaders to Kafka brokers.
+
+````sh
+# On all nodes
+./erase_all_data.sh
+````
+
+````sh
+# Single instance
+./run_ResultsUpdater.sh &
+````
+
+````sh
+# On all nodes, possibly multiple instances
+./run_AutoCommitConsumer.sh &
+./run_AutoCommitConsumer.sh &
+./run_SeekingConsumer.sh &
+./run_SeekingConsumer.sh &
+./run_GeneratorProducer.sh &
+./run_GeneratorProducer.sh &
+````
+
+````sh
+# Show assigned leaders and replicas
+/opt/kafka/bin/kafka-topics.sh --zookeeper localhost --topic kafka-test --describe
+````
+
+````sh
+# Stop or crash Kafka broker (multiple choices)
+date ; stop kafka
+date ; /opt/kafka/bin/kafka-shutdown-broker.sh
+date ; /opt/kafka/bin/kafka-server-stop.sh
+date ; pkill -9 -f kafka.Kafka
+````
+
+````sh
+# Rebalance Kafka leaders, http://kafka.apache.org/documentation.html#basic_ops_leader_balancing
+# Or auto.leader.rebalance.enable is enabled by default so waiting for a while should be enough
+/opt/kafka/bin/kafka-preferred-replica-election.sh --zookeeper localhost
 ````
 
 
