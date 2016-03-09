@@ -80,22 +80,62 @@ Prefer to use shell scripts present in the top level project directory or go dee
     - Committed offsets should be at the latest positions.
     - Start consumers and stop them after a while if you are unsure.
 - Reset state stored in database.
-
-````sh
-redis-cli
-
-# Verification that no key is present
-KEYS *
-
-# Remove all data in database (be careful!), execute before run of each test 
-FLUSHALL
-````
-
-- Update `Configuration` according to your needs.
+- Update configuration according to your needs.
 - Start `ResultsUpdater` always in one instance.
 - Start one or more instances of `AutoCommitConsumer` and `SeekingConsumer`.
     - Note there may be multiple consumers/threads inside based on `Configuration`.
 - Start one or more instances of `GeneratorProducer`
+
+
+#### Long term stability test
+
+The following test uses periodical pseudo random starting and stopping of producers and consumers with consumers rebalancing.
+
+````sh
+# On all nodes
+./erase_all_data.sh
+````
+
+````sh
+# Single instance
+./run_ResultsUpdater.sh &
+````
+
+````sh
+# On all nodes, possibly multiple instances
+./run_AutoCommitConsumer_ChaoticManager.sh &
+./run_SeekingConsumer_ChaoticManager.sh &
+./run_GeneratorProducer_ChaoticManager.sh &
+````
+
+#### Add partitions test
+
+Occasionally increase number of partitions and check logs of producers and consumer to verify they notice the change.
+
+````sh
+# On all nodes
+./erase_all_data.sh
+````
+
+````sh
+# Single instance
+./run_ResultsUpdater.sh &
+````
+
+````sh
+# On all nodes, possibly multiple instances
+./run_AutoCommitConsumer.sh &
+./run_AutoCommitConsumer.sh &
+./run_SeekingConsumer.sh &
+./run_SeekingConsumer.sh &
+./run_GeneratorProducer.sh &
+./run_GeneratorProducer.sh &
+````
+
+````sh
+# Sometimes
+date ; /opt/kafka/bin/kafka-topics.sh --zookeeper localhost --topic kafka-test --alter --partitions 42
+````
 
 
 ### More instances, rebalancing
@@ -104,7 +144,7 @@ FLUSHALL
 - Start and stop producers to have higher/lower load of messages.
 - Start and stop consumers to test behavior of consumer during rebalancing.
     - Always at least one consumer instance in each group should be running.
-- Or use `ChaoticManager` to start and stop them periodically.
+- Or use `ChaoticManager` to start and stop them periodically and pseudo randomly.
 
 
 ### Stop
