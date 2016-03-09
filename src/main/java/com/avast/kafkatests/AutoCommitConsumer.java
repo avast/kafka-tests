@@ -73,7 +73,7 @@ public class AutoCommitConsumer extends AbstractComponent implements ConsumerReb
 
                 long startTime = System.nanoTime();
                 for (ConsumerRecord<String, Integer> record : records) {
-                    logger.trace("Message consumed: {}, {}, {}/{}/{}", record.key(), record.value(), record.topic(), record.partition(), record.offset());
+                    logger.trace("Message consumed: {}, {}, {}-{}/{}", record.key(), record.value(), record.topic(), record.partition(), record.offset());
                     stateDao.markConsume(ConsumerType.autocommit, UUID.fromString(record.key()), record.value());
                 }
                 long duration = System.nanoTime() - startTime;
