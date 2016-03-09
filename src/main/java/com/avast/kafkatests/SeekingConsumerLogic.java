@@ -105,7 +105,8 @@ public class SeekingConsumerLogic implements ConsumerRebalanceListener {
 
         assignment.stream().forEach(tp -> {
             OffsetAndMetadata committed = consumer.committed(tp);
-            consumer.seek(tp, committed.offset());
+            long destinationOffset = committed != null ? committed.offset() : 0;
+            consumer.seek(tp, destinationOffset);
         });
     }
 
