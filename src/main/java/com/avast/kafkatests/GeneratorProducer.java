@@ -90,7 +90,7 @@ public class GeneratorProducer extends AbstractComponent {
         producer.send(new ProducerRecord<>(topic, key.toString(), value),
                 (metadata, exception) -> {
                     if (exception != null) {
-                        logger.error("Producing message failed: {}", exception, exception);
+                        logger.error("Producing message failed: {} topic, {}, {}, {}", topic, key, value, exception, exception);
                         stateDao.markSendFail(key, value);
                     } else {
                         logger.trace("Producing message successful: {} topic, {}, {}", topic, key, value);
