@@ -203,6 +203,8 @@ date ; pkill -9 -f kafka.Kafka
 
 ### Issues found using this tool
 
+- Producer blocks on send to topic that doesn't exist if auto create is disabled
+    - [https://issues.apache.org/jira/browse/KAFKA-3450](https://issues.apache.org/jira/browse/KAFKA-3450)
 - Too slow processing in consumer times out its session
     - This issue was only rediscovered, it's a direct consequence of new consumer single-thread API.
     - [https://issues.apache.org/jira/browse/KAFKA-2985?focusedCommentId=15105539&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-15105539](https://issues.apache.org/jira/browse/KAFKA-2985?focusedCommentId=15105539&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-15105539)
