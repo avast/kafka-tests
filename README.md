@@ -163,6 +163,10 @@ date ; /opt/kafka/bin/kafka-topics.sh --zookeeper localhost --topic kafka-test -
 ./run_SeekingConsumer.sh &
 ./run_GeneratorProducer.sh &
 ./run_GeneratorProducer.sh &
+
+./run_AutoCommitConsumer.sh &
+./run_SeekingConsumer.sh &
+./run_GeneratorProducer.sh &
 ````
 
 ````sh
