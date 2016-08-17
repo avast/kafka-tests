@@ -65,7 +65,7 @@ public class RedisStateDao implements StateDao {
         try (Jedis redis = redisPool.getResource()) {
             redis.incr(KEY_MESSAGES_SEND_FAIL);
         } catch (JedisException e) {
-            LOGGER.error("Redis operation failed: {}", e, e);
+            LOGGER.error("Redis operation failed: {}", e.toString(), e);
         }
     }
 
@@ -88,7 +88,7 @@ public class RedisStateDao implements StateDao {
 
             redis.incr(counter);
         } catch (JedisException e) {
-            LOGGER.error("Redis operation failed: {}", e, e);
+            LOGGER.error("Redis operation failed: {}", e.toString(), e);
         }
     }
 
@@ -97,7 +97,7 @@ public class RedisStateDao implements StateDao {
         try (Jedis redis = redisPool.getResource()) {
             redis.incr(KEY_MESSAGES_CONSUME_SEEKING_SKIP);
         } catch (JedisException e) {
-            LOGGER.error("Redis operation failed: {}", e, e);
+            LOGGER.error("Redis operation failed: {}", e.toString(), e);
         }
     }
 
@@ -116,7 +116,7 @@ public class RedisStateDao implements StateDao {
                             readInt(redis, KEY_PREFIX_CHECKS + k)))
                     .collect(Collectors.toList());
         } catch (JedisException e) {
-            LOGGER.error("Redis operation failed: {}", e, e);
+            LOGGER.error("Redis operation failed: {}", e.toString(), e);
             return Collections.emptyList();
         }
     }
@@ -150,7 +150,7 @@ public class RedisStateDao implements StateDao {
             redis.incrBy(KEY_BITS_SUCCESS, messagesPerGroup);
             cleanup(redis, group);
         } catch (JedisException e) {
-            LOGGER.error("Redis operation failed: {}", e, e);
+            LOGGER.error("Redis operation failed: {}", e.toString(), e);
         }
     }
 
@@ -177,7 +177,7 @@ public class RedisStateDao implements StateDao {
 
             cleanup(redis, group);
         } catch (JedisException e) {
-            LOGGER.error("Redis operation failed: {}", e, e);
+            LOGGER.error("Redis operation failed: {}", e.toString(), e);
         }
     }
 
@@ -200,7 +200,7 @@ public class RedisStateDao implements StateDao {
         try (Jedis redis = redisPool.getResource()) {
             redis.incr(KEY_PREFIX_CHECKS + key);
         } catch (JedisException e) {
-            LOGGER.error("Redis operation failed: {}", e, e);
+            LOGGER.error("Redis operation failed: {}", e.toString(), e);
         }
     }
 
@@ -230,7 +230,7 @@ public class RedisStateDao implements StateDao {
                             .collect(Collectors.toList())
             );
         } catch (JedisException e) {
-            LOGGER.error("Redis operation failed: {}", e, e);
+            LOGGER.error("Redis operation failed: {}", e.toString(), e);
             return TotalState.INSTANCE;
         }
     }

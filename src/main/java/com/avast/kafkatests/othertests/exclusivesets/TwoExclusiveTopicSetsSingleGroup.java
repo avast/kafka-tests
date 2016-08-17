@@ -135,7 +135,7 @@ public class TwoExclusiveTopicSetsSingleGroup implements Runnable, ConsumerRebal
                         messages.forEach(m -> logger.debug("Incoming messages: {}", m));
                     }
                 } catch (Exception e) {
-                    logger.error("Unexpected exception while processing messages: {}", e, e);
+                    logger.error("Unexpected exception while processing messages: {}", e.toString(), e);
                 }
             }
         }

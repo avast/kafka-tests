@@ -15,7 +15,7 @@ public class Utils {
     private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 
     public static void logAllUnhandledExceptions() {
-        Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOGGER.error("Default uncaught exception handler: {}, {}", t, e, e));
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOGGER.error("Default uncaught exception handler: {}, {}", t, e.toString(), e));
     }
 
     public static void closeOnShutdown(AutoCloseable closeable) {
@@ -25,7 +25,7 @@ public class Utils {
                     LOGGER.info("====================== Shutdown hook ======================");
                     closeable.close();
                 } catch (Exception e) {
-                    LOGGER.error("Exception while closing on shutdown: {}", e, e);
+                    LOGGER.error("Exception while closing on shutdown: {}", e.toString(), e);
                 }
             }
         });
@@ -54,7 +54,7 @@ public class Utils {
                 LOGGER.error("Waiting for termination of executor timed out: {}, max {} ms, {}", name, timeout.toMillis(), executor);
             }
         } catch (InterruptedException e) {
-            LOGGER.error("Waiting for termination of executor interrupted: {}, max {} ms, {}, {}", name, timeout.toMillis(), executor, e, e);
+            LOGGER.error("Waiting for termination of executor interrupted: {}, max {} ms, {}, {}", name, timeout.toMillis(), executor, e.toString(), e);
         }
     }
 }

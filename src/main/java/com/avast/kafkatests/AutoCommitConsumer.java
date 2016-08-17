@@ -81,7 +81,7 @@ public class AutoCommitConsumer extends AbstractComponent implements ConsumerReb
                 logger.debug("Processing of poll batch finished: {} messages, {} ms", records.count(), TimeUnit.NANOSECONDS.toMillis(duration));
             }
         } catch (Exception e) {
-            logger.error("Unexpected exception occurred: {}", e, e);
+            logger.error("Unexpected exception occurred: {}", e.toString(), e);
         }
 
         logger.info("Worker thread stopped");

@@ -71,7 +71,7 @@ public class GeneratorProducer extends AbstractComponent {
                 produceMessagesGroup();
             }
         } catch (Exception e) {
-            logger.error("Unexpected exception occurred: {}", e, e);
+            logger.error("Unexpected exception occurred: {}", e.toString(), e);
         }
 
         logger.info("Worker thread stopped");
@@ -90,7 +90,7 @@ public class GeneratorProducer extends AbstractComponent {
         producer.send(new ProducerRecord<>(topic, key.toString(), value),
                 (metadata, exception) -> {
                     if (exception != null) {
-                        logger.error("Producing message failed: {} topic, {}, {}, {}", topic, key, value, exception, exception);
+                        logger.error("Producing message failed: {} topic, {}, {}, {}", topic, key, value, exception.toString(), exception);
                         stateDao.markSendFail(key, value);
                     } else {
                         logger.trace("Producing message successful: {} topic, {}, {}", topic, key, value);

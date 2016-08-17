@@ -70,7 +70,7 @@ public class ChaoticManager implements RunnableComponent {
             LOGGER.info("Making some random decisions");
             IntStream.range(0, decisionsPerUpdate).forEach(i -> randomDecision());
         } catch (Exception e) {
-            LOGGER.error("Unexpected exception occurred: {}", e, e);
+            LOGGER.error("Unexpected exception occurred: {}", e.toString(), e);
         }
     }
 

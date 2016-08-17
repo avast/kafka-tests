@@ -57,7 +57,7 @@ public class ResultsUpdater implements RunnableComponent {
             updateState();
             printState();
         } catch (Exception e) {
-            LOGGER.error("Unexpected exception occurred: {}", e, e);
+            LOGGER.error("Unexpected exception occurred: {}", e.toString(), e);
         }
     }
 

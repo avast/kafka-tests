@@ -86,7 +86,7 @@ public class SeekingConsumer extends AbstractComponent {
 
             logic.optionallyCommitAllOffsets();
         } catch (Exception e) {
-            logger.error("Unexpected exception occurred: {}", e, e);
+            logger.error("Unexpected exception occurred: {}", e.toString(), e);
         }
 
         logger.info("Worker thread stopped");

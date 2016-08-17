@@ -91,7 +91,7 @@ public class SeekingConsumerLogic implements ConsumerRebalanceListener {
         try {
             consumer.commitSync();
         } catch (CommitFailedException e) {
-            LOGGER.error("Commit of offsets failed: {}", e, e);
+            LOGGER.error("Commit of offsets failed: {}", e.toString(), e);
         }
     }
 
