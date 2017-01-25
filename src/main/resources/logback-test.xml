@@ -14,7 +14,10 @@
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
     <logger name="org.apache.kafka.clients.consumer.ConsumerConfig" level="WARN"/>
 
-    <logger name="com.avast.kafkatests" level="TRACE"/>
-    <logger name="com.avast.kafkatests.GeneratorProducer" level="DEBUG"/>
+    <!--<logger name="com.avast.kafkatests" level="TRACE"/>-->
+    <!--<logger name="com.avast.kafkatests.GeneratorProducer" level="DEBUG"/>-->
+    <logger name="com.avast.kafkatests" level="INFO"/>
+    <logger name="com.avast.kafkatests.GeneratorProducer" level="INFO"/>
+
     <logger name="com.avast.kafkatests.ResultsUpdater" level="DEBUG"/>
 </configuration>
